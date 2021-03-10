@@ -38,6 +38,6 @@ it('资源分配算法 OK', () => {
 
     assert(system.isSafe())
 
-    const canAssignResources = system.requestResource('P2', [0, 3, 4])
+    const canAssignResources = system.assignResources('P2', [0, 3, 4])
     assert(canAssignResources)
 })

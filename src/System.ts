@@ -101,24 +101,24 @@ export const System = new class {
     }
 
     /**
-     * 资源请求算法
+     * 资源分配算法
      * 
      * @param process 需要申请资源的进程id
      * @param requests 需要申请的资源数
      * 
-     * @returns 资源请求是否成功
+     * @returns 资源分配是否成功
      */
-    public requestResource(id: number, requests: number[]): boolean;
+    public assignResources(id: number, requests: number[]): boolean;
     /**
-     * 资源请求算法
+     * 资源分配算法
      * 
      * @param process 需要申请资源的进程id
      * @param requests 需要申请的资源数
      * 
-     * @returns 资源请求是否成功
+     * @returns 资源分配是否成功
      */
-    public requestResource(name: string, requests: number[]): boolean;
-    public requestResource(id: number | string, requests: number[]): boolean {
+    public assignResources(name: string, requests: number[]): boolean;
+    public assignResources(id: number | string, requests: number[]): boolean {
         let process = this._processes[id]
 
         if (typeof id === 'string') {

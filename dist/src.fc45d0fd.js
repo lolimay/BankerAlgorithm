@@ -30159,7 +30159,7 @@ function () {
     return isSafe;
   };
 
-  class_1.prototype.requestResource = function (id, requests) {
+  class_1.prototype.assignResources = function (id, requests) {
     var _this = this;
 
     var process = this._processes[id];
