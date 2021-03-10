@@ -1,0 +1,24 @@
+{
+  "name": "banker-algorithm",
+  "version": "1.0.0",
+  "description": "银行家算法可视化",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "npm run dev",
+    "dev": "parcel index.html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lolimay/BankerAlgorithm.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lolimay/BankerAlgorithm/issues"
+  },
+  "homepage": "https://github.com/lolimay/BankerAlgorithm#readme",
+  "devDependencies": {
+    "typescript": "^4.2.3"
+  }
+}
