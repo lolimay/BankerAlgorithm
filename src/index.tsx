@@ -82,7 +82,8 @@ function App() {
     const checkSystemSafety = async () => {
         setReadOnly(true)
         appendLog({ level: LogLevel.Info, content: '开始检查系统安全性...' })
-        const isSafe = System.isSafe()
+
+        System.isSafe()
 
         for (const event of System.events) {
             switch (event.type) {

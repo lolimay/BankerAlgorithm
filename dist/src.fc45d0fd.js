@@ -30728,7 +30728,7 @@ function App() {
 
   var checkSystemSafety = function checkSystemSafety() {
     return __awaiter(_this, void 0, void 0, function () {
-      var isSafe, _a, _b, event, toBeUpdatedProcs, e_1_1;
+      var _a, _b, event, toBeUpdatedProcs, e_1_1;
 
       var e_1, _c;
 
@@ -30740,7 +30740,7 @@ function App() {
               level: LogLevel.Info,
               content: '开始检查系统安全性...'
             });
-            isSafe = System_1.System.isSafe();
+            System_1.System.isSafe();
             _d.label = 1;
 
           case 1:
