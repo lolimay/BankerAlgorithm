@@ -29983,7 +29983,7 @@ process.umask = function () {
 };
 },{}],"src/System.ts":[function(require,module,exports) {
 var process = require("process");
-"use strict"; // https://www.cnblogs.com/chuxiuhong/p/6103928.html
+"use strict"; // 算法参考：https://www.cnblogs.com/chuxiuhong/p/6103928.html
 
 var __values = this && this.__values || function (o) {
   var s = typeof Symbol === "function" && Symbol.iterator,
@@ -30208,7 +30208,79 @@ function () {
 
   return class_1;
 }())();
-},{"process":"../../../../.nvm/versions/node/v12.13.0/lib/node_modules/parcel-bundler/node_modules/process/browser.js"}],"src/index.tsx":[function(require,module,exports) {
+},{"process":"../../../../.nvm/versions/node/v12.13.0/lib/node_modules/parcel-bundler/node_modules/process/browser.js"}],"../../../../.nvm/versions/node/v12.13.0/lib/node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
+var bundleURL = null;
+
+function getBundleURLCached() {
+  if (!bundleURL) {
+    bundleURL = getBundleURL();
+  }
+
+  return bundleURL;
+}
+
+function getBundleURL() {
+  // Attempt to find the URL of the current script and use that as the base URL
+  try {
+    throw new Error();
+  } catch (err) {
+    var matches = ('' + err.stack).match(/(https?|file|ftp|chrome-extension|moz-extension):\/\/[^)\n]+/g);
+
+    if (matches) {
+      return getBaseURL(matches[0]);
+    }
+  }
+
+  return '/';
+}
+
+function getBaseURL(url) {
+  return ('' + url).replace(/^((?:https?|file|ftp|chrome-extension|moz-extension):\/\/.+)\/[^/]+$/, '$1') + '/';
+}
+
+exports.getBundleURL = getBundleURLCached;
+exports.getBaseURL = getBaseURL;
+},{}],"../../../../.nvm/versions/node/v12.13.0/lib/node_modules/parcel-bundler/src/builtins/css-loader.js":[function(require,module,exports) {
+var bundle = require('./bundle-url');
+
+function updateLink(link) {
+  var newLink = link.cloneNode();
+
+  newLink.onload = function () {
+    link.remove();
+  };
+
+  newLink.href = link.href.split('?')[0] + '?' + Date.now();
+  link.parentNode.insertBefore(newLink, link.nextSibling);
+}
+
+var cssTimeout = null;
+
+function reloadCSS() {
+  if (cssTimeout) {
+    return;
+  }
+
+  cssTimeout = setTimeout(function () {
+    var links = document.querySelectorAll('link[rel="stylesheet"]');
+
+    for (var i = 0; i < links.length; i++) {
+      if (bundle.getBaseURL(links[i].href) === bundle.getBundleURL()) {
+        updateLink(links[i]);
+      }
+    }
+
+    cssTimeout = null;
+  }, 50);
+}
+
+module.exports = reloadCSS;
+},{"./bundle-url":"../../../../.nvm/versions/node/v12.13.0/lib/node_modules/parcel-bundler/src/builtins/bundle-url.js"}],"src/index.scss":[function(require,module,exports) {
+var reloadCSS = require('_css_loader');
+
+module.hot.dispose(reloadCSS);
+module.hot.accept(reloadCSS);
+},{"_css_loader":"../../../../.nvm/versions/node/v12.13.0/lib/node_modules/parcel-bundler/src/builtins/css-loader.js"}],"src/index.tsx":[function(require,module,exports) {
 "use strict";
 
 var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
@@ -30245,6 +30317,33 @@ var __importStar = this && this.__importStar || function (mod) {
   return result;
 };
 
+var __read = this && this.__read || function (o, n) {
+  var m = typeof Symbol === "function" && o[Symbol.iterator];
+  if (!m) return o;
+  var i = m.call(o),
+      r,
+      ar = [],
+      e;
+
+  try {
+    while ((n === void 0 || n-- > 0) && !(r = i.next()).done) {
+      ar.push(r.value);
+    }
+  } catch (error) {
+    e = {
+      error: error
+    };
+  } finally {
+    try {
+      if (r && !r.done && (m = i["return"])) m.call(i);
+    } finally {
+      if (e) throw e.error;
+    }
+  }
+
+  return ar;
+};
+
 var __importDefault = this && this.__importDefault || function (mod) {
   return mod && mod.__esModule ? mod : {
     "default": mod
@@ -30261,41 +30360,106 @@ var react_1 = __importStar(require("react"));
 
 var System_1 = require("./System");
 
+require("./index.scss");
+
 function App() {
+  var _a = __read(react_1.useState([2, 3, 2]), 2),
+      resources = _a[0],
+      setResources = _a[1];
+
+  var _b = __read(react_1.useState([{
+    name: 'P1',
+    allocations: [2, 1, 2],
+    needs: [3, 4, 7],
+    isFinish: false
+  }, {
+    name: 'P2',
+    allocations: [4, 0, 2],
+    needs: [1, 3, 4],
+    isFinish: false
+  }, {
+    name: 'P3',
+    allocations: [4, 0, 5],
+    needs: [0, 0, 6],
+    isFinish: false
+  }, {
+    name: 'P4',
+    allocations: [2, 0, 4],
+    needs: [2, 2, 1],
+    isFinish: false
+  }, {
+    name: 'P5',
+    allocations: [3, 1, 4],
+    needs: [1, 1, 0],
+    isFinish: false
+  }]), 2),
+      processes = _b[0],
+      setProcesses = _b[1];
+
+  var toFlexAround = function toFlexAround(arr) {
+    return arr.map(function (num, index) {
+      return react_1.default.createElement("input", {
+        key: index,
+        className: 'hidden-input',
+        value: num
+      });
+    });
+  };
+
   react_1.useEffect(function () {
-    var system = System_1.System.setAvailableResources([2, 3, 3]).setProcesses([{
-      name: 'P1',
-      allocations: [2, 1, 2],
-      needs: [3, 4, 7],
-      isFinish: false
-    }, {
-      name: 'P2',
-      allocations: [4, 0, 2],
-      needs: [1, 3, 4],
-      isFinish: false
-    }, {
-      name: 'P3',
-      allocations: [4, 0, 5],
-      needs: [0, 0, 6],
-      isFinish: false
-    }, {
-      name: 'P4',
-      allocations: [2, 0, 4],
-      needs: [2, 2, 1],
-      isFinish: false
-    }, {
-      name: 'P5',
-      allocations: [3, 1, 4],
-      needs: [1, 1, 0],
-      isFinish: false
-    }]);
-    var canAssignResources = system.assignResources('P2', [0, 3, 4]);
-  }, []);
-  return react_1.default.createElement("div", null, "Hello World!");
+    System_1.System.setProcesses(processes).setAvailableResources(resources);
+  }, [resources, processes]);
+  return react_1.default.createElement(react_1.default.Fragment, null, react_1.default.createElement("div", {
+    className: 'main'
+  }, react_1.default.createElement("div", {
+    className: 'title'
+  }, "\u94F6\u884C\u5BB6\u7B97\u6CD5\u6A21\u62DF\u5668"), react_1.default.createElement("table", null, react_1.default.createElement("tbody", null, react_1.default.createElement("tr", null, react_1.default.createElement("td", null, "\u7CFB\u7EDF\u8FDB\u7A0B\u6570 (Processes)"), react_1.default.createElement("td", null, "\u7CFB\u7EDF\u8D44\u6E90\u79CD\u7C7B\u6570 (Resources Categories)"), react_1.default.createElement("td", null, "\u7CFB\u7EDF\u5269\u4F59\u8D44\u6E90\u6570 (Available)")), react_1.default.createElement("tr", null, react_1.default.createElement("td", null, react_1.default.createElement("input", {
+    className: 'hidden-input',
+    value: processes.length
+  })), react_1.default.createElement("td", null, react_1.default.createElement("input", {
+    className: 'hidden-input',
+    value: resources.length
+  })), react_1.default.createElement("td", {
+    className: 'flex-around'
+  }, toFlexAround(resources))))), react_1.default.createElement("table", null, react_1.default.createElement("tbody", null, react_1.default.createElement("tr", null, react_1.default.createElement("td", null, "\u8FDB\u7A0B\u540D (Process)"), react_1.default.createElement("td", null, "\u5DF2\u5206\u914D\u8D44\u6E90\u6570 (Allocation)"), react_1.default.createElement("td", null, "\u4ECD\u9700\u8981\u8D44\u6E90\u6570 (Need)"), react_1.default.createElement("td", null, "\u8FDB\u7A0B\u72B6\u6001 (Finish)"), react_1.default.createElement("td", null, "\u5DE5\u4F5C\u5411\u91CF (Work)")), processes.map(function (_a, index) {
+    var name = _a.name,
+        allocations = _a.allocations,
+        needs = _a.needs,
+        isFinish = _a.isFinish;
+    return react_1.default.createElement("tr", {
+      key: index
+    }, react_1.default.createElement("td", null, react_1.default.createElement("input", {
+      className: 'hidden-input',
+      value: name
+    })), react_1.default.createElement("td", {
+      className: 'flex-around'
+    }, toFlexAround(allocations)), react_1.default.createElement("td", {
+      className: 'flex-around'
+    }, toFlexAround(needs)), react_1.default.createElement("td", {
+      style: {
+        color: isFinish ? 'red' : 'green'
+      }
+    }, isFinish ? '已完成' : '运行中'), react_1.default.createElement("td", null));
+  }))), react_1.default.createElement("div", {
+    className: 'panel'
+  }, react_1.default.createElement("div", {
+    className: 'left'
+  }, react_1.default.createElement("button", null, "\u68C0\u67E5\u7CFB\u7EDF\u5B89\u5168\u6027")), react_1.default.createElement("div", {
+    className: 'right'
+  }, react_1.default.createElement("span", null, "\u5C1D\u8BD5\u4E3A\u8FDB\u7A0B\u5206\u914D\u8D44\u6E90\uFF1A"), react_1.default.createElement("select", null, processes.map(function (_a, index) {
+    var name = _a.name;
+    return react_1.default.createElement("option", {
+      key: index
+    }, name);
+  })), resources.map(function (_, index) {
+    return react_1.default.createElement("input", {
+      key: index
+    });
+  }), react_1.default.createElement("button", null, "\u7533\u8BF7\u8D44\u6E90")))));
 }
 
 react_dom_1.default.render(react_1.default.createElement(App, null), document.getElementById('root'));
-},{"react-dom":"node_modules/react-dom/index.js","react":"node_modules/react/index.js","./System":"src/System.ts"}],"../../../../.nvm/versions/node/v12.13.0/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"react-dom":"node_modules/react-dom/index.js","react":"node_modules/react/index.js","./System":"src/System.ts","./index.scss":"src/index.scss"}],"../../../../.nvm/versions/node/v12.13.0/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;

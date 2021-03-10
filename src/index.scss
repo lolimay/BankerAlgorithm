@@ -1,0 +1,63 @@
+body {
+    font-family: "Courier New", Courier, monospace;
+
+    .main {
+        margin: 1em auto;
+        text-align: center;
+        width: 50vw;
+
+        .panel {
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            .right {
+                input {
+                    width: 1.5em;
+                    text-align: center;
+                    margin-left: 10px;
+                }
+                button {
+                    margin-left: 10px;
+                }
+            }
+        }
+    }
+
+    .title {
+        text-align: center;
+        margin-top: 1em;
+        font-size: 1.5em;
+    }
+
+    table {
+        margin: 1em auto;
+        background: black;
+
+        th {
+            padding: 0;
+        }
+
+        td {
+            background: white;
+            padding: 5px 10px;
+            text-align: center;
+        }
+    }
+
+    .flex-around span {
+        display: inline-block;
+        margin: 0 0.5em;
+    }
+
+    button {
+        cursor: pointer;
+    }
+
+    .hidden-input {
+        margin: 0 5px;
+        padding: 5px 10px;
+        width: 2em;
+        text-align: center;
+        border: none;
+    }
+}
