@@ -30362,46 +30362,57 @@ var System_1 = require("./System");
 
 require("./index.scss");
 
+var defaultResources = [2, 3, 2];
+var defaultProcesses = [{
+  name: 'P1',
+  allocations: [2, 1, 2],
+  needs: [3, 4, 7],
+  isFinish: false
+}, {
+  name: 'P2',
+  allocations: [4, 0, 2],
+  needs: [1, 3, 4],
+  isFinish: false
+}, {
+  name: 'P3',
+  allocations: [4, 0, 5],
+  needs: [0, 0, 6],
+  isFinish: false
+}, {
+  name: 'P4',
+  allocations: [2, 0, 4],
+  needs: [2, 2, 1],
+  isFinish: false
+}, {
+  name: 'P5',
+  allocations: [3, 1, 4],
+  needs: [1, 1, 0],
+  isFinish: false
+}];
+
 function App() {
-  var _a = __read(react_1.useState([2, 3, 2]), 2),
+  var _a = __read(react_1.useState(defaultResources), 2),
       resources = _a[0],
       setResources = _a[1];
 
-  var _b = __read(react_1.useState([{
-    name: 'P1',
-    allocations: [2, 1, 2],
-    needs: [3, 4, 7],
-    isFinish: false
-  }, {
-    name: 'P2',
-    allocations: [4, 0, 2],
-    needs: [1, 3, 4],
-    isFinish: false
-  }, {
-    name: 'P3',
-    allocations: [4, 0, 5],
-    needs: [0, 0, 6],
-    isFinish: false
-  }, {
-    name: 'P4',
-    allocations: [2, 0, 4],
-    needs: [2, 2, 1],
-    isFinish: false
-  }, {
-    name: 'P5',
-    allocations: [3, 1, 4],
-    needs: [1, 1, 0],
-    isFinish: false
-  }]), 2),
+  var _b = __read(react_1.useState(defaultProcesses), 2),
       processes = _b[0],
       setProcesses = _b[1];
+
+  var _c = __read(react_1.useState({}), 2),
+      preValues = _c[0],
+      setPreValues = _c[1];
 
   var toFlexAround = function toFlexAround(arr) {
     return arr.map(function (num, index) {
       return react_1.default.createElement("input", {
-        key: index,
+        type: 'number',
+        min: '0',
+        max: '99',
         className: 'hidden-input',
-        value: num
+        defaultValue: num,
+        onFocus: onCategoriesFocus,
+        key: index
       });
     });
   };
@@ -30409,19 +30420,33 @@ function App() {
   react_1.useEffect(function () {
     System_1.System.setProcesses(processes).setAvailableResources(resources);
   }, [resources, processes]);
+
+  var onCategoriesFocus = function onCategoriesFocus(ev) {
+    ev.target.select();
+    ev.target.value();
+  };
+
   return react_1.default.createElement(react_1.default.Fragment, null, react_1.default.createElement("div", {
     className: 'main'
   }, react_1.default.createElement("div", {
     className: 'title'
   }, "\u94F6\u884C\u5BB6\u7B97\u6CD5\u6A21\u62DF\u5668"), react_1.default.createElement("table", null, react_1.default.createElement("tbody", null, react_1.default.createElement("tr", null, react_1.default.createElement("td", null, "\u7CFB\u7EDF\u8FDB\u7A0B\u6570 (Processes)"), react_1.default.createElement("td", null, "\u7CFB\u7EDF\u8D44\u6E90\u79CD\u7C7B\u6570 (Resources Categories)"), react_1.default.createElement("td", null, "\u7CFB\u7EDF\u5269\u4F59\u8D44\u6E90\u6570 (Available)")), react_1.default.createElement("tr", null, react_1.default.createElement("td", null, react_1.default.createElement("input", {
+    type: 'number',
+    min: '0',
+    max: '99',
     className: 'hidden-input',
-    value: processes.length
+    defaultValue: processes.length,
+    onFocus: onCategoriesFocus
   })), react_1.default.createElement("td", null, react_1.default.createElement("input", {
+    type: 'number',
+    min: '0',
+    max: '99',
     className: 'hidden-input',
-    value: resources.length
+    defaultValue: resources.length,
+    onFocus: onCategoriesFocus
   })), react_1.default.createElement("td", {
     className: 'flex-around'
-  }, toFlexAround(resources))))), react_1.default.createElement("table", null, react_1.default.createElement("tbody", null, react_1.default.createElement("tr", null, react_1.default.createElement("td", null, "\u8FDB\u7A0B\u540D (Process)"), react_1.default.createElement("td", null, "\u5DF2\u5206\u914D\u8D44\u6E90\u6570 (Allocation)"), react_1.default.createElement("td", null, "\u4ECD\u9700\u8981\u8D44\u6E90\u6570 (Need)"), react_1.default.createElement("td", null, "\u8FDB\u7A0B\u72B6\u6001 (Finish)"), react_1.default.createElement("td", null, "\u5DE5\u4F5C\u5411\u91CF (Work)")), processes.map(function (_a, index) {
+  }, toFlexAround(resources))))), react_1.default.createElement("table", null, react_1.default.createElement("tbody", null, react_1.default.createElement("tr", null, react_1.default.createElement("td", null, "\u8FDB\u7A0B\u540D (Process)"), react_1.default.createElement("td", null, "\u5DF2\u5206\u914D\u8D44\u6E90\u6570 (Allocation)"), react_1.default.createElement("td", null, "\u4ECD\u9700\u8981\u8D44\u6E90\u6570 (Need)"), react_1.default.createElement("td", null, "\u8FDB\u7A0B\u72B6\u6001 (Finish)")), processes.map(function (_a, index) {
     var name = _a.name,
         allocations = _a.allocations,
         needs = _a.needs,
@@ -30430,7 +30455,7 @@ function App() {
       key: index
     }, react_1.default.createElement("td", null, react_1.default.createElement("input", {
       className: 'hidden-input',
-      value: name
+      defaultValue: name
     })), react_1.default.createElement("td", {
       className: 'flex-around'
     }, toFlexAround(allocations)), react_1.default.createElement("td", {
@@ -30439,7 +30464,7 @@ function App() {
       style: {
         color: isFinish ? 'red' : 'green'
       }
-    }, isFinish ? '已完成' : '运行中'), react_1.default.createElement("td", null));
+    }, isFinish ? '已完成' : '运行中'));
   }))), react_1.default.createElement("div", {
     className: 'panel'
   }, react_1.default.createElement("div", {
@@ -30453,7 +30478,12 @@ function App() {
     }, name);
   })), resources.map(function (_, index) {
     return react_1.default.createElement("input", {
-      key: index
+      key: index,
+      type: 'number',
+      min: '0',
+      max: '99',
+      defaultValue: '0',
+      onFocus: onCategoriesFocus
     });
   }), react_1.default.createElement("button", null, "\u7533\u8BF7\u8D44\u6E90")))));
 }

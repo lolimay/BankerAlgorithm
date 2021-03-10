@@ -4,25 +4,42 @@ import { System } from './System'
 
 import './index.scss'
 
+const defaultResources = [2, 3, 2]
+const defaultProcesses = [
+    { name: 'P1', allocations: [2, 1, 2], needs: [3, 4, 7], isFinish: false },
+    { name: 'P2', allocations: [4, 0, 2], needs: [1, 3, 4], isFinish: false },
+    { name: 'P3', allocations: [4, 0, 5], needs: [0, 0, 6], isFinish: false },
+    { name: 'P4', allocations: [2, 0, 4], needs: [2, 2, 1], isFinish: false },
+    { name: 'P5', allocations: [3, 1, 4], needs: [1, 1, 0], isFinish: false },
+]
+
 function App() {
-    const [resources, setResources] = useState([2, 3, 2])
-    const [processes, setProcesses] = useState([
-        { name: 'P1', allocations: [2, 1, 2], needs: [3, 4, 7], isFinish: false },
-        { name: 'P2', allocations: [4, 0, 2], needs: [1, 3, 4], isFinish: false },
-        { name: 'P3', allocations: [4, 0, 5], needs: [0, 0, 6], isFinish: false },
-        { name: 'P4', allocations: [2, 0, 4], needs: [2, 2, 1], isFinish: false },
-        { name: 'P5', allocations: [3, 1, 4], needs: [1, 1, 0], isFinish: false },
-    ])
+    const [resources, setResources] = useState(defaultResources)
+    const [processes, setProcesses] = useState(defaultProcesses)
+    const [preValues, setPreValues] = useState({})
 
     const toFlexAround = (arr: number[]) => {
         return arr.map((num, index) => (
-            <input key={index} className='hidden-input' value={num} ></input>
+            <input
+                type='number'
+                min='0'
+                max='99'
+                className='hidden-input'
+                defaultValue={num}
+                onFocus={onCategoriesFocus}
+                key={index}
+            ></input>
         ))
     }
 
     useEffect(() => {
         System.setProcesses(processes).setAvailableResources(resources)
     }, [resources, processes])
+
+    const onCategoriesFocus = ev => {
+        ev.target.select()
+        ev.target.value()
+    }
 
     return (
         <>
@@ -36,8 +53,24 @@ function App() {
                             <td>系统剩余资源数 (Available)</td>
                         </tr>
                         <tr>
-                            <td><input className='hidden-input' value={processes.length}></input></td>
-                            <td><input className='hidden-input' value={resources.length}></input></td>
+                            <td><input
+                                type='number'
+                                min='0'
+                                max='99'
+                                className='hidden-input'
+                                defaultValue={processes.length}
+                                onFocus={onCategoriesFocus}
+                            >
+                            </input></td>
+                            <td><input
+                                type='number'
+                                min='0'
+                                max='99'
+                                className='hidden-input'
+                                defaultValue={resources.length}
+                                onFocus={onCategoriesFocus}
+                            >
+                            </input></td>
                             <td className='flex-around'>{toFlexAround(resources)}</td>
                         </tr>
                     </tbody>
@@ -49,18 +82,16 @@ function App() {
                             <td>已分配资源数 (Allocation)</td>
                             <td>仍需要资源数 (Need)</td>
                             <td>进程状态 (Finish)</td>
-                            <td>工作向量 (Work)</td>
                         </tr>
                         {
                             processes.map(({ name, allocations, needs, isFinish }, index) => (
                                 <tr key={index}>
-                                    <td><input className='hidden-input' value={name}></input></td>
+                                    <td><input className='hidden-input' defaultValue={name}></input></td>
                                     <td className='flex-around'>{toFlexAround(allocations)}</td>
                                     <td className='flex-around'>{toFlexAround(needs)}</td>
                                     <td
                                         style={{ color: isFinish ? 'red' : 'green' }}
                                     >{isFinish ? '已完成' : '运行中'}</td>
-                                    <td></td>
                                 </tr>
                             ))
                         }
@@ -75,7 +106,16 @@ function App() {
                         <select>
                             {processes.map(({ name }, index) => <option key={index}>{name}</option>)}
                         </select>
-                        {resources.map((_, index) => <input key={index}></input>)}
+                        {resources.map((_, index) => (
+                            <input
+                                key={index}
+                                type='number'
+                                min='0'
+                                max='99'
+                                defaultValue='0'
+                                onFocus={onCategoriesFocus}
+                            ></input>
+                        ))}
                         <button>申请资源</button>
                     </div>
                 </div>
