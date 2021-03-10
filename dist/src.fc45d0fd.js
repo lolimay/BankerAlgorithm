@@ -29985,21 +29985,20 @@ process.umask = function () {
 var process = require("process");
 "use strict"; // 算法参考：https://www.cnblogs.com/chuxiuhong/p/6103928.html
 
-var __values = this && this.__values || function (o) {
-  var s = typeof Symbol === "function" && Symbol.iterator,
-      m = s && o[s],
-      i = 0;
-  if (m) return m.call(o);
-  if (o && typeof o.length === "number") return {
-    next: function next() {
-      if (o && i >= o.length) o = void 0;
-      return {
-        value: o && o[i++],
-        done: !o
-      };
+var __assign = this && this.__assign || function () {
+  __assign = Object.assign || function (t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+      s = arguments[i];
+
+      for (var p in s) {
+        if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+      }
     }
+
+    return t;
   };
-  throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+
+  return __assign.apply(this, arguments);
 };
 
 var __read = this && this.__read || function (o, n) {
@@ -30027,6 +30026,31 @@ var __read = this && this.__read || function (o, n) {
   }
 
   return ar;
+};
+
+var __spreadArray = this && this.__spreadArray || function (to, from) {
+  for (var i = 0, il = from.length, j = to.length; i < il; i++, j++) {
+    to[j] = from[i];
+  }
+
+  return to;
+};
+
+var __values = this && this.__values || function (o) {
+  var s = typeof Symbol === "function" && Symbol.iterator,
+      m = s && o[s],
+      i = 0;
+  if (m) return m.call(o);
+  if (o && typeof o.length === "number") return {
+    next: function next() {
+      if (o && i >= o.length) o = void 0;
+      return {
+        value: o && o[i++],
+        done: !o
+      };
+    }
+  };
+  throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 };
 
 Object.defineProperty(exports, "__esModule", {
@@ -30076,12 +30100,12 @@ function () {
   });
 
   class_1.prototype.setProcesses = function (processes) {
-    this._processes = processes;
+    this._processes = this.clone(processes);
     return this;
   };
 
   class_1.prototype.setAvailableResources = function (resources) {
-    this._availableResources = resources;
+    this._availableResources = this.clone(resources);
     return this;
   };
 
@@ -30119,7 +30143,7 @@ function () {
     var _this = this; // 初始化
 
 
-    Object.assign(this._work, this._availableResources); // 动态记录当前剩余资源
+    this._work = __spreadArray([], __read(this._availableResources)); // 动态记录当前剩余资源
 
     this._processes.forEach(function (process) {
       return process.isFinish = false;
@@ -30144,7 +30168,10 @@ function () {
             continue;
           }
 
-          this.emit(SystemEventType); // 如果存在可执行进程，则该进程一定能完成，并归还其占用的资源
+          var moveWorkVecPayload = {
+            id: i,
+            work: __spreadArray([], __read(this._work))
+          }; // 如果存在可执行进程，则该进程一定能完成，并归还其占用的资源
 
           if (!proc.isFinish && proc.needs.every(function (need, i) {
             return need <= _this._work[i];
@@ -30156,6 +30183,14 @@ function () {
             isFound = true;
 
             this._safeSequence.push(i);
+
+            this.emit(SystemEventType.MOVE_WORKVEC, __assign(__assign({}, moveWorkVecPayload), {
+              executable: true
+            }));
+          } else {
+            this.emit(SystemEventType.MOVE_WORKVEC, __assign(__assign({}, moveWorkVecPayload), {
+              executable: false
+            }));
           }
         }
       } catch (e_1_1) {
@@ -30239,6 +30274,10 @@ function () {
       });
       return false;
     }
+  };
+
+  class_1.prototype.clone = function (source) {
+    return JSON.parse(JSON.stringify(source));
   };
 
   return class_1;
@@ -30352,6 +30391,149 @@ var __importStar = this && this.__importStar || function (mod) {
   return result;
 };
 
+var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+  function adopt(value) {
+    return value instanceof P ? value : new P(function (resolve) {
+      resolve(value);
+    });
+  }
+
+  return new (P || (P = Promise))(function (resolve, reject) {
+    function fulfilled(value) {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function rejected(value) {
+      try {
+        step(generator["throw"](value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function step(result) {
+      result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+    }
+
+    step((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+};
+
+var __generator = this && this.__generator || function (thisArg, body) {
+  var _ = {
+    label: 0,
+    sent: function sent() {
+      if (t[0] & 1) throw t[1];
+      return t[1];
+    },
+    trys: [],
+    ops: []
+  },
+      f,
+      y,
+      t,
+      g;
+  return g = {
+    next: verb(0),
+    "throw": verb(1),
+    "return": verb(2)
+  }, typeof Symbol === "function" && (g[Symbol.iterator] = function () {
+    return this;
+  }), g;
+
+  function verb(n) {
+    return function (v) {
+      return step([n, v]);
+    };
+  }
+
+  function step(op) {
+    if (f) throw new TypeError("Generator is already executing.");
+
+    while (_) {
+      try {
+        if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+        if (y = 0, t) op = [op[0] & 2, t.value];
+
+        switch (op[0]) {
+          case 0:
+          case 1:
+            t = op;
+            break;
+
+          case 4:
+            _.label++;
+            return {
+              value: op[1],
+              done: false
+            };
+
+          case 5:
+            _.label++;
+            y = op[1];
+            op = [0];
+            continue;
+
+          case 7:
+            op = _.ops.pop();
+
+            _.trys.pop();
+
+            continue;
+
+          default:
+            if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+              _ = 0;
+              continue;
+            }
+
+            if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+              _.label = op[1];
+              break;
+            }
+
+            if (op[0] === 6 && _.label < t[1]) {
+              _.label = t[1];
+              t = op;
+              break;
+            }
+
+            if (t && _.label < t[2]) {
+              _.label = t[2];
+
+              _.ops.push(op);
+
+              break;
+            }
+
+            if (t[2]) _.ops.pop();
+
+            _.trys.pop();
+
+            continue;
+        }
+
+        op = body.call(thisArg, _);
+      } catch (e) {
+        op = [6, e];
+        y = 0;
+      } finally {
+        f = t = 0;
+      }
+    }
+
+    if (op[0] & 5) throw op[1];
+    return {
+      value: op[0] ? op[1] : void 0,
+      done: true
+    };
+  }
+};
+
 var __read = this && this.__read || function (o, n) {
   var m = typeof Symbol === "function" && o[Symbol.iterator];
   if (!m) return o;
@@ -30430,31 +30612,31 @@ var getFormattedTime = function getFormattedTime() {
 };
 
 exports.getFormattedTime = getFormattedTime;
-var defaultResources = [2, 3, 2];
+var defaultResources = [3, 3, 2];
 var defaultProcesses = [{
+  name: 'P0',
+  allocations: [0, 1, 0],
+  needs: [7, 4, 3],
+  isFinish: false
+}, {
   name: 'P1',
-  allocations: [2, 1, 2],
-  needs: [3, 4, 7],
+  allocations: [2, 0, 0],
+  needs: [1, 2, 2],
   isFinish: false
 }, {
   name: 'P2',
-  allocations: [4, 0, 2],
-  needs: [1, 3, 4],
+  allocations: [3, 0, 2],
+  needs: [6, 0, 0],
   isFinish: false
 }, {
   name: 'P3',
-  allocations: [4, 0, 5],
-  needs: [0, 0, 6],
+  allocations: [2, 1, 1],
+  needs: [0, 1, 1],
   isFinish: false
 }, {
   name: 'P4',
-  allocations: [2, 0, 4],
-  needs: [2, 2, 1],
-  isFinish: false
-}, {
-  name: 'P5',
-  allocations: [3, 1, 4],
-  needs: [1, 1, 0],
+  allocations: [0, 0, 2],
+  needs: [4, 3, 1],
   isFinish: false
 }];
 var InputGroupType;
@@ -30474,6 +30656,8 @@ var LogLevel;
 })(LogLevel || (LogLevel = {}));
 
 function App() {
+  var _this = this;
+
   var _a = __read(react_1.useState(defaultResources), 2),
       resources = _a[0],
       setResources = _a[1];
@@ -30486,12 +30670,20 @@ function App() {
       preValues = _c[0],
       setPreValues = _c[1];
 
-  var _d = __read(react_1.useState([{
+  var _d = __read(react_1.useState(false), 2),
+      readOnly = _d[0],
+      setReadOnly = _d[1];
+
+  var _e = __read(react_1.useState({}), 2),
+      workInfo = _e[0],
+      setWorkInfo = _e[1];
+
+  var _f = __read(react_1.useState([{
     level: LogLevel.Info,
     content: '模拟器已启动！'
   }]), 2),
-      logs = _d[0],
-      setLogs = _d[1];
+      logs = _f[0],
+      setLogs = _f[1];
 
   var toFlexAround = function toFlexAround(type, row, arr) {
     return arr.map(function (num, index) {
@@ -30504,7 +30696,8 @@ function App() {
         id: type + "-" + row + "-" + index,
         key: index,
         onFocus: onInputFocus,
-        onChange: onInputChange
+        onChange: onInputChange,
+        disabled: readOnly
       });
     });
   };
@@ -30516,9 +30709,90 @@ function App() {
   };
 
   var checkSystemSafety = function checkSystemSafety() {
-    appendLog({
-      level: LogLevel.Info,
-      content: '开始检查系统安全性...'
+    return __awaiter(_this, void 0, void 0, function () {
+      var isSafe, _a, _b, event, e_1_1;
+
+      var e_1, _c;
+
+      return __generator(this, function (_d) {
+        switch (_d.label) {
+          case 0:
+            setReadOnly(true);
+            appendLog({
+              level: LogLevel.Info,
+              content: '开始检查系统安全性...'
+            });
+            isSafe = System_1.System.isSafe();
+            _d.label = 1;
+
+          case 1:
+            _d.trys.push([1, 6, 7, 8]);
+
+            _a = __values(System_1.System.events), _b = _a.next();
+            _d.label = 2;
+
+          case 2:
+            if (!!_b.done) return [3
+            /*break*/
+            , 5];
+            event = _b.value;
+
+            switch (event.type) {
+              case System_1.SystemEventType.MOVE_WORKVEC:
+                {
+                  setWorkInfo(event.payload);
+                  break;
+                }
+            }
+
+            return [4
+            /*yield*/
+            , new Promise(function (resume) {
+              return setTimeout(resume, 2000);
+            })];
+
+          case 3:
+            _d.sent();
+
+            _d.label = 4;
+
+          case 4:
+            _b = _a.next();
+            return [3
+            /*break*/
+            , 2];
+
+          case 5:
+            return [3
+            /*break*/
+            , 8];
+
+          case 6:
+            e_1_1 = _d.sent();
+            e_1 = {
+              error: e_1_1
+            };
+            return [3
+            /*break*/
+            , 8];
+
+          case 7:
+            try {
+              if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+            } finally {
+              if (e_1) throw e_1.error;
+            }
+
+            return [7
+            /*endfinally*/
+            ];
+
+          case 8:
+            return [2
+            /*return*/
+            ];
+        }
+      });
     });
   };
 
@@ -30550,7 +30824,7 @@ function App() {
   };
 
   var onInputChange = function onInputChange(ev) {
-    var e_1, _a;
+    var e_2, _a;
 
     var element = ev.target;
     var diff = element.value - preValues.get(element);
@@ -30600,15 +30874,15 @@ function App() {
                 toBeUpdatedProcs[i].needs = needs.slice(0, parseInt(element.value));
               }
             }
-          } catch (e_1_1) {
-            e_1 = {
-              error: e_1_1
+          } catch (e_2_1) {
+            e_2 = {
+              error: e_2_1
             };
           } finally {
             try {
               if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             } finally {
-              if (e_1) throw e_1.error;
+              if (e_2) throw e_2.error;
             }
           }
 
@@ -30676,7 +30950,8 @@ function App() {
     className: 'hidden-input',
     defaultValue: processes.length,
     onFocus: onInputFocus,
-    onChange: onInputChange
+    onChange: onInputChange,
+    disabled: readOnly
   })), react_1.default.createElement("td", null, react_1.default.createElement("input", {
     type: 'number',
     min: '0',
@@ -30685,7 +30960,8 @@ function App() {
     className: 'hidden-input',
     defaultValue: resources.length,
     onFocus: onInputFocus,
-    onChange: onInputChange
+    onChange: onInputChange,
+    disabled: readOnly
   })), react_1.default.createElement("td", {
     className: 'flex-around'
   }, toFlexAround(InputGroupType.Available, 0, resources))))), react_1.default.createElement("table", null, react_1.default.createElement("tbody", null, react_1.default.createElement("tr", null, react_1.default.createElement("td", null, "\u8FDB\u7A0B\u540D (Process)"), react_1.default.createElement("td", null, "\u5DF2\u5206\u914D\u8D44\u6E90\u6570 (Allocation)"), react_1.default.createElement("td", null, "\u4ECD\u9700\u8981\u8D44\u6E90\u6570 (Need)"), react_1.default.createElement("td", null, "\u8FDB\u7A0B\u72B6\u6001 (Finish)"), react_1.default.createElement("td", null, "\u5DE5\u4F5C\u5411\u91CF (Work)"), react_1.default.createElement("td", null, "\u8FDB\u7A0B\u662F\u5426\u53EF\u6267\u884C (Executable)")), processes.map(function (_a, index) {
@@ -30695,9 +30971,19 @@ function App() {
         isFinish = _a.isFinish;
     return react_1.default.createElement("tr", {
       key: index
-    }, react_1.default.createElement("td", null, react_1.default.createElement("input", {
+    }, react_1.default.createElement("td", {
+      style: {
+        background: (workInfo === null || workInfo === void 0 ? void 0 : workInfo.id) === index ? 'purple' : ''
+      }
+    }, react_1.default.createElement("input", {
       className: 'hidden-input',
-      defaultValue: name
+      defaultValue: name,
+      disabled: readOnly,
+      style: {
+        fontWeight: (workInfo === null || workInfo === void 0 ? void 0 : workInfo.id) === index ? 'bold' : '',
+        color: (workInfo === null || workInfo === void 0 ? void 0 : workInfo.id) === index ? 'white' : '',
+        background: (workInfo === null || workInfo === void 0 ? void 0 : workInfo.id) === index ? 'transparent' : ''
+      }
     })), react_1.default.createElement("td", {
       className: 'flex-around'
     }, toFlexAround(InputGroupType.Allocation, index, allocations)), react_1.default.createElement("td", {
@@ -30706,16 +30992,26 @@ function App() {
       style: {
         color: isFinish ? 'red' : 'green'
       }
-    }, isFinish ? '已完成' : '运行中'), react_1.default.createElement("td", null), react_1.default.createElement("td", null));
+    }, isFinish ? '已完成' : '运行中'), react_1.default.createElement("td", {
+      className: 'flex-around'
+    }, (workInfo === null || workInfo === void 0 ? void 0 : workInfo.id) === index ? toFlexAround(InputGroupType.Allocation, index, workInfo.work) : ''), react_1.default.createElement("td", {
+      className: 'flex-around',
+      style: {
+        color: (workInfo === null || workInfo === void 0 ? void 0 : workInfo.id) === index ? workInfo.executable ? 'green' : 'orange' : ''
+      }
+    }, (workInfo === null || workInfo === void 0 ? void 0 : workInfo.id) === index ? workInfo.executable ? '可执行' : '不可执行' : ''));
   }))), react_1.default.createElement("div", {
     className: 'panel'
   }, react_1.default.createElement("div", {
     className: 'left'
   }, react_1.default.createElement("button", {
-    onClick: checkSystemSafety
+    onClick: checkSystemSafety,
+    disabled: readOnly
   }, "\u68C0\u67E5\u7CFB\u7EDF\u5B89\u5168\u6027")), react_1.default.createElement("div", {
     className: 'right'
-  }, react_1.default.createElement("span", null, "\u5C1D\u8BD5\u4E3A\u8FDB\u7A0B\u5206\u914D\u8D44\u6E90\uFF1A"), react_1.default.createElement("select", null, processes.map(function (_a, index) {
+  }, react_1.default.createElement("span", null, "\u5C1D\u8BD5\u4E3A\u8FDB\u7A0B\u5206\u914D\u8D44\u6E90\uFF1A"), react_1.default.createElement("select", {
+    disabled: readOnly
+  }, processes.map(function (_a, index) {
     var name = _a.name;
     return react_1.default.createElement("option", {
       key: index
@@ -30727,9 +31023,12 @@ function App() {
       min: '0',
       max: '99',
       defaultValue: '0',
-      onFocus: onInputFocus
+      onFocus: onInputFocus,
+      disabled: readOnly
     });
-  }), react_1.default.createElement("button", null, "\u7533\u8BF7\u8D44\u6E90"))), react_1.default.createElement("div", {
+  }), react_1.default.createElement("button", {
+    disabled: readOnly
+  }, "\u7533\u8BF7\u8D44\u6E90"))), react_1.default.createElement("div", {
     className: 'logs'
   }, logs.map(function (_a, index) {
     var level = _a.level,

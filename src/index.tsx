@@ -1,6 +1,6 @@
 import ReactDOM from 'react-dom'
 import React, { useState, useEffect } from 'react'
-import { Process, System, SystemEventPayload } from './System'
+import { Process, System, SystemEventPayload, SystemEventType } from './System'
 
 import './index.scss'
 
@@ -8,13 +8,13 @@ export const getFormattedTime = () => {
     return new Date().toLocaleString('zh-Hans-CN', { hour12: false })
 }
 
-const defaultResources = [2, 3, 2]
+const defaultResources = [3, 3, 2]
 const defaultProcesses = [
-    { name: 'P1', allocations: [2, 1, 2], needs: [3, 4, 7], isFinish: false },
-    { name: 'P2', allocations: [4, 0, 2], needs: [1, 3, 4], isFinish: false },
-    { name: 'P3', allocations: [4, 0, 5], needs: [0, 0, 6], isFinish: false },
-    { name: 'P4', allocations: [2, 0, 4], needs: [2, 2, 1], isFinish: false },
-    { name: 'P5', allocations: [3, 1, 4], needs: [1, 1, 0], isFinish: false },
+    { name: 'P0', allocations: [0, 1, 0], needs: [7, 4, 3], isFinish: false },
+    { name: 'P1', allocations: [2, 0, 0], needs: [1, 2, 2], isFinish: false },
+    { name: 'P2', allocations: [3, 0, 2], needs: [6, 0, 0], isFinish: false },
+    { name: 'P3', allocations: [2, 1, 1], needs: [0, 1, 1], isFinish: false },
+    { name: 'P4', allocations: [0, 0, 2], needs: [4, 3, 1], isFinish: false },
 ]
 
 enum InputGroupType {
@@ -38,6 +38,8 @@ function App() {
     const [resources, setResources] = useState(defaultResources)
     const [processes, setProcesses] = useState(defaultProcesses)
     const [preValues, setPreValues] = useState(new Map())
+    const [readOnly, setReadOnly] = useState(false)
+    const [workInfo, setWorkInfo] = useState({})
     const [logs, setLogs] = useState([{ level: LogLevel.Info, content: '模拟器已启动！' } as Log])
 
     const toFlexAround = (type: InputGroupType, row: number, arr: number[]) => {
@@ -52,6 +54,7 @@ function App() {
                 key={index}
                 onFocus={onInputFocus}
                 onChange={onInputChange}
+                disabled={readOnly}
             ></input>
         ))
     }
@@ -61,8 +64,20 @@ function App() {
         setLogs(toBeUpdatedLogs)
     }
 
-    const checkSystemSafety = () => {
+    const checkSystemSafety = async () => {
+        setReadOnly(true)
         appendLog({ level: LogLevel.Info, content: '开始检查系统安全性...' })
+        const isSafe = System.isSafe()
+
+        for (const event of System.events) {
+            switch (event.type) {
+                case SystemEventType.MOVE_WORKVEC: {
+                    setWorkInfo(event.payload)
+                    break
+                }
+            }
+            await new Promise(resume => setTimeout(resume, 2000))
+        }
     }
 
     useEffect(() => {
@@ -170,6 +185,7 @@ function App() {
                                 defaultValue={processes.length}
                                 onFocus={onInputFocus}
                                 onChange={onInputChange}
+                                disabled={readOnly}
                             >
                             </input></td>
                             <td><input
@@ -181,6 +197,7 @@ function App() {
                                 defaultValue={resources.length}
                                 onFocus={onInputFocus}
                                 onChange={onInputChange}
+                                disabled={readOnly}
                             >
                             </input></td>
                             <td className='flex-around'>{toFlexAround(InputGroupType.Available, 0, resources)}</td>
@@ -200,14 +217,32 @@ function App() {
                         {
                             processes.map(({ name, allocations, needs, isFinish }, index) => (
                                 <tr key={index}>
-                                    <td><input className='hidden-input' defaultValue={name}></input></td>
+                                    <td style={{ background: workInfo?.id === index ? 'purple' : '' }}>
+                                        <input
+                                            className='hidden-input'
+                                            defaultValue={name}
+                                            disabled={readOnly}
+                                            style={{
+                                                fontWeight: workInfo?.id === index ? 'bold' : '',
+                                                color: workInfo?.id === index ? 'white' : '',
+                                                background: workInfo?.id === index ? 'transparent' : '',
+                                            }}
+                                        ></input>
+                                    </td>
                                     <td className='flex-around'>{toFlexAround(InputGroupType.Allocation, index, allocations)}</td>
                                     <td className='flex-around'>{toFlexAround(InputGroupType.Need, index, needs)}</td>
                                     <td
                                         style={{ color: isFinish ? 'red' : 'green' }}
                                     >{isFinish ? '已完成' : '运行中'}</td>
-                                    <td></td>
-                                    <td></td>
+                                    <td className='flex-around'>{
+                                        workInfo?.id === index ? toFlexAround(InputGroupType.Allocation, index, workInfo.work) : ''
+                                    }</td>
+                                    <td
+                                        className='flex-around'
+                                        style={{ color: workInfo?.id === index ? (workInfo.executable ? 'green' : 'orange') : '' }}
+                                    >{
+                                            workInfo?.id === index ? (workInfo.executable ? '可执行' : '不可执行') : ''
+                                        }</td>
                                 </tr>
                             ))
                         }
@@ -215,11 +250,11 @@ function App() {
                 </table>
                 <div className='panel'>
                     <div className='left'>
-                        <button onClick={checkSystemSafety}>检查系统安全性</button>
+                        <button onClick={checkSystemSafety} disabled={readOnly}>检查系统安全性</button>
                     </div>
                     <div className='right'>
                         <span>尝试为进程分配资源：</span>
-                        <select>
+                        <select disabled={readOnly}>
                             {processes.map(({ name }, index) => <option key={index}>{name}</option>)}
                         </select>
                         {resources.map((_, index) => (
@@ -230,9 +265,10 @@ function App() {
                                 max='99'
                                 defaultValue='0'
                                 onFocus={onInputFocus}
+                                disabled={readOnly}
                             ></input>
                         ))}
-                        <button>申请资源</button>
+                        <button disabled={readOnly}>申请资源</button>
                     </div>
                 </div>
                 <div className='logs'>{logs.map(({ level, content }, index) => (

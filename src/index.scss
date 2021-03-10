@@ -74,4 +74,9 @@ body {
         text-align: center;
         border: none;
     }
+
+    input:disabled {
+        background: white;
+        border: none;
+    }
 }

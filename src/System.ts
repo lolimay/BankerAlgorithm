@@ -74,12 +74,12 @@ export const System = new class {
     }
 
     public setProcesses(processes: Process[]) {
-        this._processes = processes
+        this._processes = this.clone(processes)
         return this
     }
 
     public setAvailableResources(resources: number[]) {
-        this._availableResources = resources
+        this._availableResources = this.clone(resources)
         return this
     }
 
@@ -104,7 +104,7 @@ export const System = new class {
      */
     public isSafe() {
         // 初始化
-        Object.assign(this._work, this._availableResources) // 动态记录当前剩余资源
+        this._work = [...this._availableResources] // 动态记录当前剩余资源
         this._processes.forEach(process => process.isFinish = false) // 设定所有进程均未完成
         this._safeSequence = [] // 设置安全序列为空
         this.emit(SystemEventType.INIT)
@@ -119,7 +119,7 @@ export const System = new class {
                     continue
                 }
 
-                this.emit(SystemEventType)
+                const moveWorkVecPayload = { id: i, work: [...this._work], }
 
                 // 如果存在可执行进程，则该进程一定能完成，并归还其占用的资源
                 if (!proc.isFinish && proc.needs.every((need, i) => need <= this._work[i])) {
@@ -127,6 +127,10 @@ export const System = new class {
                     proc.allocations.forEach((alloc, i) => this._work[i] += alloc)
                     isFound = true
                     this._safeSequence.push(i)
+
+                    this.emit(SystemEventType.MOVE_WORKVEC, { ...moveWorkVecPayload, executable: true })
+                } else {
+                    this.emit(SystemEventType.MOVE_WORKVEC, { ...moveWorkVecPayload, executable: false })
                 }
             }
 
@@ -205,5 +209,9 @@ export const System = new class {
             })
             return false
         }
+    }
+
+    private clone(source: object) {
+        return JSON.parse(JSON.stringify(source))
     }
 }
