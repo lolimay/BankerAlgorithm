@@ -57,7 +57,7 @@ export const System = new class {
      */
     public isSafe() {
         // 初始化
-        this._work = this._availableResources // 动态记录当前剩余资源
+        Object.assign(this._work, this._availableResources) // 动态记录当前剩余资源
         this._processes.forEach(process => process.isFinish = false) // 设定所有进程均未完成
         this._safeSequence = [] // 设置安全序列为空
 

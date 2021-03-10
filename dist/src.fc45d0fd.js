@@ -30086,7 +30086,7 @@ function () {
     var _this = this; // 初始化
 
 
-    this._work = this._availableResources; // 动态记录当前剩余资源
+    Object.assign(this._work, this._availableResources); // 动态记录当前剩余资源
 
     this._processes.forEach(function (process) {
       return process.isFinish = false;
@@ -30263,28 +30263,33 @@ var System_1 = require("./System");
 
 function App() {
   react_1.useEffect(function () {
-    var isSafe = System_1.System.setAvailableResources([3, 3, 2]).setProcesses([{
-      allocations: [0, 1, 0],
-      needs: [7, 4, 3],
+    var system = System_1.System.setAvailableResources([2, 3, 3]).setProcesses([{
+      name: 'P1',
+      allocations: [2, 1, 2],
+      needs: [3, 4, 7],
       isFinish: false
     }, {
-      allocations: [2, 0, 0],
-      needs: [1, 2, 2],
+      name: 'P2',
+      allocations: [4, 0, 2],
+      needs: [1, 3, 4],
       isFinish: false
     }, {
-      allocations: [3, 0, 2],
-      needs: [6, 0, 0],
+      name: 'P3',
+      allocations: [4, 0, 5],
+      needs: [0, 0, 6],
       isFinish: false
     }, {
-      allocations: [2, 1, 1],
-      needs: [0, 1, 1],
+      name: 'P4',
+      allocations: [2, 0, 4],
+      needs: [2, 2, 1],
       isFinish: false
     }, {
-      allocations: [0, 0, 2],
-      needs: [4, 3, 1],
+      name: 'P5',
+      allocations: [3, 1, 4],
+      needs: [1, 1, 0],
       isFinish: false
-    }]).isSafe();
-    console.log(isSafe);
+    }]);
+    var canAssignResources = system.assignResources('P2', [0, 3, 4]);
   }, []);
   return react_1.default.createElement("div", null, "Hello World!");
 }
