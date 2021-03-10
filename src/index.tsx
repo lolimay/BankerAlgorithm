@@ -97,7 +97,28 @@ function App() {
                 setResources(toBeUpdatedRes)
                 break
             }
-
+            default: {
+                const [type, row, index] = element.id.split('-')
+                switch (parseInt(type)) {
+                    case InputGroupType.Available: {
+                        const toBeUpdatedRes = [...resources]
+                        toBeUpdatedRes[index] = parseInt(element.value)
+                        setResources(toBeUpdatedRes)
+                        break
+                    }
+                    case InputGroupType.Allocation: {
+                        const toBeUpdatedProcs = [...processes]
+                        toBeUpdatedProcs[row].allocations[index] = parseInt(element.value)
+                        setProcesses(toBeUpdatedProcs)
+                        break
+                    }
+                    case InputGroupType.Need: {
+                        const toBeUpdatedProcs = [...processes]
+                        toBeUpdatedProcs[row].needs[index] = parseInt(element.value)
+                        setProcesses(toBeUpdatedProcs)
+                    }
+                }
+            }
         }
 
         preValues.set(element, element.value)
@@ -148,6 +169,7 @@ function App() {
                             <td>已分配资源数 (Allocation)</td>
                             <td>仍需要资源数 (Need)</td>
                             <td>进程状态 (Finish)</td>
+                            <td>工作向量 (Work)</td>
                         </tr>
                         {
                             processes.map(({ name, allocations, needs, isFinish }, index) => (
@@ -158,6 +180,7 @@ function App() {
                                     <td
                                         style={{ color: isFinish ? 'red' : 'green' }}
                                     >{isFinish ? '已完成' : '运行中'}</td>
+                                    <td></td>
                                 </tr>
                             ))
                         }

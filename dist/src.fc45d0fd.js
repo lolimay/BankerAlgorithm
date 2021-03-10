@@ -30552,6 +30552,42 @@ function App() {
           setResources(toBeUpdatedRes);
           break;
         }
+
+      default:
+        {
+          var _f = __read(element.id.split('-'), 3),
+              type = _f[0],
+              row = _f[1],
+              index = _f[2];
+
+          switch (parseInt(type)) {
+            case InputGroupType.Available:
+              {
+                var toBeUpdatedRes = __spreadArray([], __read(resources));
+
+                toBeUpdatedRes[index] = parseInt(element.value);
+                setResources(toBeUpdatedRes);
+                break;
+              }
+
+            case InputGroupType.Allocation:
+              {
+                var toBeUpdatedProcs = __spreadArray([], __read(processes));
+
+                toBeUpdatedProcs[row].allocations[index] = parseInt(element.value);
+                setProcesses(toBeUpdatedProcs);
+                break;
+              }
+
+            case InputGroupType.Need:
+              {
+                var toBeUpdatedProcs = __spreadArray([], __read(processes));
+
+                toBeUpdatedProcs[row].needs[index] = parseInt(element.value);
+                setProcesses(toBeUpdatedProcs);
+              }
+          }
+        }
     }
 
     preValues.set(element, element.value);
@@ -30581,7 +30617,7 @@ function App() {
     onChange: onInputChange
   })), react_1.default.createElement("td", {
     className: 'flex-around'
-  }, toFlexAround(InputGroupType.Available, 0, resources))))), react_1.default.createElement("table", null, react_1.default.createElement("tbody", null, react_1.default.createElement("tr", null, react_1.default.createElement("td", null, "\u8FDB\u7A0B\u540D (Process)"), react_1.default.createElement("td", null, "\u5DF2\u5206\u914D\u8D44\u6E90\u6570 (Allocation)"), react_1.default.createElement("td", null, "\u4ECD\u9700\u8981\u8D44\u6E90\u6570 (Need)"), react_1.default.createElement("td", null, "\u8FDB\u7A0B\u72B6\u6001 (Finish)")), processes.map(function (_a, index) {
+  }, toFlexAround(InputGroupType.Available, 0, resources))))), react_1.default.createElement("table", null, react_1.default.createElement("tbody", null, react_1.default.createElement("tr", null, react_1.default.createElement("td", null, "\u8FDB\u7A0B\u540D (Process)"), react_1.default.createElement("td", null, "\u5DF2\u5206\u914D\u8D44\u6E90\u6570 (Allocation)"), react_1.default.createElement("td", null, "\u4ECD\u9700\u8981\u8D44\u6E90\u6570 (Need)"), react_1.default.createElement("td", null, "\u8FDB\u7A0B\u72B6\u6001 (Finish)"), react_1.default.createElement("td", null, "\u5DE5\u4F5C\u5411\u91CF (Work)")), processes.map(function (_a, index) {
     var name = _a.name,
         allocations = _a.allocations,
         needs = _a.needs,
@@ -30599,7 +30635,7 @@ function App() {
       style: {
         color: isFinish ? 'red' : 'green'
       }
-    }, isFinish ? '已完成' : '运行中'));
+    }, isFinish ? '已完成' : '运行中'), react_1.default.createElement("td", null));
   }))), react_1.default.createElement("div", {
     className: 'panel'
   }, react_1.default.createElement("div", {
