@@ -108,7 +108,7 @@ export const System = new class {
      * 
      * @returns 资源分配是否成功
      */
-    public assignResources(id: number, requests: number[]): boolean;
+    public allocateResources(id: number, requests: number[]): boolean;
     /**
      * 资源分配算法
      * 
@@ -117,8 +117,8 @@ export const System = new class {
      * 
      * @returns 资源分配是否成功
      */
-    public assignResources(name: string, requests: number[]): boolean;
-    public assignResources(id: number | string, requests: number[]): boolean {
+    public allocateResources(name: string, requests: number[]): boolean;
+    public allocateResources(id: number | string, requests: number[]): boolean {
         let process = this._processes[id]
 
         if (typeof id === 'string') {
