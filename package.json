@@ -2,7 +2,7 @@
   "name": "banker-algorithm",
   "version": "1.0.0",
   "description": "银行家算法可视化",
-  "main": "src/index.ts",
+  "main": "src/index.tsx",
   "scripts": {
     "start": "npm run dev",
     "dev": "parcel index.html"
@@ -20,5 +20,9 @@
   "homepage": "https://github.com/lolimay/BankerAlgorithm#readme",
   "devDependencies": {
     "typescript": "^4.2.3"
+  },
+  "dependencies": {
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1"
   }
 }
