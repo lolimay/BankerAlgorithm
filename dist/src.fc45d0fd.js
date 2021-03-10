@@ -30032,7 +30032,15 @@ var __read = this && this.__read || function (o, n) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.System = void 0;
+exports.System = exports.SystemEventType = void 0;
+var SystemEventType;
+
+(function (SystemEventType) {
+  SystemEventType[SystemEventType["INIT"] = 0] = "INIT";
+  SystemEventType[SystemEventType["MOVE_WORKVEC"] = 1] = "MOVE_WORKVEC";
+  SystemEventType[SystemEventType["EXIT"] = 2] = "EXIT";
+})(SystemEventType = exports.SystemEventType || (exports.SystemEventType = {}));
+
 exports.System = new (
 /** @class */
 function () {
@@ -30056,6 +30064,7 @@ function () {
      */
 
     this._safeSequence = [];
+    this._events = [];
   }
 
   Object.defineProperty(class_1.prototype, "totalProcesses", {
@@ -30074,6 +30083,30 @@ function () {
   class_1.prototype.setAvailableResources = function (resources) {
     this._availableResources = resources;
     return this;
+  };
+
+  Object.defineProperty(class_1.prototype, "events", {
+    get: function get() {
+      return this._events;
+    },
+    enumerable: false,
+    configurable: true
+  });
+  /**
+   * 系统事件生命周期函数，通过 hook 系统事件来更新 UI
+   *
+   * 当发生系统事件时会被调用
+   */
+
+  class_1.prototype.emit = function (type, payload) {
+    if (type === SystemEventType.EXIT) {
+      return this._events = [];
+    }
+
+    return this._events.push({
+      type: type,
+      payload: payload
+    });
   };
   /**
    * 安全判定算法
@@ -30094,7 +30127,8 @@ function () {
 
 
     this._safeSequence = []; // 设置安全序列为空
-    // 不断查找可执行进程 (未完成但目前资源可满足其需要，这样的进程是能够完成的)
+
+    this.emit(SystemEventType.INIT); // 不断查找可执行进程 (未完成但目前资源可满足其需要，这样的进程是能够完成的)
 
     while (true) {
       var isFound = false; // 是否在未完成的进程中找到可执行进程
@@ -30108,8 +30142,9 @@ function () {
 
           if (proc.isFinish) {
             continue;
-          } // 如果存在可执行进程，则该进程一定能完成，并归还其占用的资源
+          }
 
+          this.emit(SystemEventType); // 如果存在可执行进程，则该进程一定能完成，并归还其占用的资源
 
           if (!proc.isFinish && proc.needs.every(function (need, i) {
             return need <= _this._work[i];
@@ -30474,6 +30509,19 @@ function App() {
     });
   };
 
+  var appendLog = function appendLog(log) {
+    var toBeUpdatedLogs = __spreadArray(__spreadArray([], __read(logs)), [log]);
+
+    setLogs(toBeUpdatedLogs);
+  };
+
+  var checkSystemSafety = function checkSystemSafety() {
+    appendLog({
+      level: LogLevel.Info,
+      content: '开始检查系统安全性...'
+    });
+  };
+
   react_1.useEffect(function () {
     System_1.System.setProcesses(processes).setAvailableResources(resources);
   }, [resources, processes]);
@@ -30663,7 +30711,9 @@ function App() {
     className: 'panel'
   }, react_1.default.createElement("div", {
     className: 'left'
-  }, react_1.default.createElement("button", null, "\u68C0\u67E5\u7CFB\u7EDF\u5B89\u5168\u6027")), react_1.default.createElement("div", {
+  }, react_1.default.createElement("button", {
+    onClick: checkSystemSafety
+  }, "\u68C0\u67E5\u7CFB\u7EDF\u5B89\u5168\u6027")), react_1.default.createElement("div", {
     className: 'right'
   }, react_1.default.createElement("span", null, "\u5C1D\u8BD5\u4E3A\u8FDB\u7A0B\u5206\u914D\u8D44\u6E90\uFF1A"), react_1.default.createElement("select", null, processes.map(function (_a, index) {
     var name = _a.name;
@@ -30681,10 +30731,11 @@ function App() {
     });
   }), react_1.default.createElement("button", null, "\u7533\u8BF7\u8D44\u6E90"))), react_1.default.createElement("div", {
     className: 'logs'
-  }, logs.map(function (_a) {
+  }, logs.map(function (_a, index) {
     var level = _a.level,
         content = _a.content;
     return react_1.default.createElement("p", {
+      key: index,
       style: {
         color: level
       }

@@ -1,6 +1,6 @@
 import ReactDOM from 'react-dom'
 import React, { useState, useEffect } from 'react'
-import { Process, System } from './System'
+import { Process, System, SystemEventPayload } from './System'
 
 import './index.scss'
 
@@ -54,6 +54,15 @@ function App() {
                 onChange={onInputChange}
             ></input>
         ))
+    }
+
+    const appendLog = (log: Log) => {
+        const toBeUpdatedLogs = [...logs, log]
+        setLogs(toBeUpdatedLogs)
+    }
+
+    const checkSystemSafety = () => {
+        appendLog({ level: LogLevel.Info, content: '开始检查系统安全性...' })
     }
 
     useEffect(() => {
@@ -206,7 +215,7 @@ function App() {
                 </table>
                 <div className='panel'>
                     <div className='left'>
-                        <button>检查系统安全性</button>
+                        <button onClick={checkSystemSafety}>检查系统安全性</button>
                     </div>
                     <div className='right'>
                         <span>尝试为进程分配资源：</span>
@@ -226,8 +235,8 @@ function App() {
                         <button>申请资源</button>
                     </div>
                 </div>
-                <div className='logs'>{logs.map(({ level, content }) => (
-                    <p style={{ color: level }}>{`[${ getFormattedTime() }] ${ content }`}</p>
+                <div className='logs'>{logs.map(({ level, content }, index) => (
+                    <p key={index} style={{ color: level }}>{`[${ getFormattedTime() }] ${ content }`}</p>
                 ))}</div>
             </div>
         </>

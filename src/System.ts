@@ -20,6 +20,36 @@ export interface Process {
 
 }
 
+export enum SystemEventType {
+    INIT,
+    MOVE_WORKVEC,
+    EXIT
+}
+
+export interface SystemEventPayload {
+    [SystemEventType.INIT]: void
+    [SystemEventType.EXIT]: void
+    [SystemEventType.MOVE_WORKVEC]: {
+        /**
+         * 进程id
+         */
+        id: number
+        /**
+         * 当前工作向量的内容
+         */
+        work: number[]
+        /**
+         * 当前进程是否可执行
+         */
+        executable: boolean
+    }
+}
+
+export interface SystemEvent<K extends keyof SystemEventPayload> {
+    type: K,
+    payload?: SystemEventPayload[K]
+}
+
 export const System = new class {
     /**
      * 系统进程
@@ -37,6 +67,7 @@ export const System = new class {
      * 安全序列
      */
     private _safeSequence: number[] = []
+    private _events: SystemEvent<any>[] = []
 
     public get totalProcesses(): number {
         return this._processes.length
@@ -52,6 +83,22 @@ export const System = new class {
         return this
     }
 
+    public get events(): SystemEvent<any>[] {
+        return this._events
+    }
+
+    /**
+     * 系统事件生命周期函数，通过 hook 系统事件来更新 UI
+     * 
+     * 当发生系统事件时会被调用
+     */
+    public emit<K extends keyof SystemEventPayload>(type: K, payload?: SystemEventPayload[K]) {
+        if (type === SystemEventType.EXIT) {
+            return this._events = []
+        }
+        return this._events.push({ type, payload })
+    }
+
     /**
      * 安全判定算法
      */
@@ -60,6 +107,7 @@ export const System = new class {
         Object.assign(this._work, this._availableResources) // 动态记录当前剩余资源
         this._processes.forEach(process => process.isFinish = false) // 设定所有进程均未完成
         this._safeSequence = [] // 设置安全序列为空
+        this.emit(SystemEventType.INIT)
 
         // 不断查找可执行进程 (未完成但目前资源可满足其需要，这样的进程是能够完成的)
         while (true) {
@@ -70,6 +118,8 @@ export const System = new class {
                 if (proc.isFinish) {
                     continue
                 }
+
+                this.emit(SystemEventType)
 
                 // 如果存在可执行进程，则该进程一定能完成，并归还其占用的资源
                 if (!proc.isFinish && proc.needs.every((need, i) => need <= this._work[i])) {
