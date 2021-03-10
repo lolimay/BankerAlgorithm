@@ -30063,7 +30063,9 @@ var SystemEventType;
   SystemEventType[SystemEventType["INIT"] = 0] = "INIT";
   SystemEventType[SystemEventType["MOVE_WORKVEC"] = 1] = "MOVE_WORKVEC";
   SystemEventType[SystemEventType["PROCESS_FINISH"] = 2] = "PROCESS_FINISH";
-  SystemEventType[SystemEventType["EXIT"] = 3] = "EXIT";
+  SystemEventType[SystemEventType["SEQ_FOUND"] = 3] = "SEQ_FOUND";
+  SystemEventType[SystemEventType["SEQ_NOT_FOUND"] = 4] = "SEQ_NOT_FOUND";
+  SystemEventType[SystemEventType["EXIT"] = 5] = "EXIT";
 })(SystemEventType = exports.SystemEventType || (exports.SystemEventType = {}));
 
 exports.System = new (
@@ -30225,7 +30227,9 @@ function () {
         return _this._processes[id].name || id;
       }).join();
 
-      console.log("<" + seq + ">");
+      this.emit(SystemEventType.SEQ_FOUND, "<" + seq + ">");
+    } else {
+      this.emit(SystemEventType.SEQ_NOT_FOUND);
     }
 
     return isSafe;
@@ -30682,7 +30686,7 @@ function App() {
 
   var _f = __read(react_1.useState([{
     level: LogLevel.Info,
-    content: '模拟器已启动！'
+    content: '点击按钮开始进行安全性检查'
   }]), 2),
       logs = _f[0],
       setLogs = _f[1];
@@ -30720,26 +30724,22 @@ function App() {
     });
   };
 
-  var appendLog = function appendLog(log) {
-    var toBeUpdatedLogs = __spreadArray(__spreadArray([], __read(logs)), [log]);
-
-    setLogs(toBeUpdatedLogs);
-  };
-
   var checkSystemSafety = function checkSystemSafety() {
     return __awaiter(_this, void 0, void 0, function () {
-      var _a, _b, event, toBeUpdatedProcs, e_1_1;
+      var toBeUpdatedLogs, _a, _b, event, toBeUpdatedProcs, logs_1, logs_2, e_1_1;
 
       var e_1, _c;
 
       return __generator(this, function (_d) {
         switch (_d.label) {
           case 0:
+            toBeUpdatedLogs = __spreadArray([], __read(logs));
             setReadOnly(true);
-            appendLog({
+            toBeUpdatedLogs.push({
               level: LogLevel.Info,
               content: '开始检查系统安全性...'
             });
+            setLogs(toBeUpdatedLogs);
             System_1.System.isSafe();
             _d.label = 1;
 
@@ -30767,6 +30767,26 @@ function App() {
                   toBeUpdatedProcs = __spreadArray([], __read(processes));
                   toBeUpdatedProcs[event.payload].isFinish = true;
                   setProcesses(toBeUpdatedProcs);
+                  break;
+                }
+
+              case System_1.SystemEventType.SEQ_FOUND:
+                {
+                  logs_1 = __spreadArray(__spreadArray([], __read(toBeUpdatedLogs)), [{
+                    level: LogLevel.Warn,
+                    content: "\u627E\u5230\u5B89\u5168\u5E8F\u5217\uFF1A " + event.payload + "\uFF0C\u5F53\u524D\u65F6\u523B\u7CFB\u7EDF\u5B89\u5168\uFF01"
+                  }]);
+                  setLogs(logs_1);
+                  break;
+                }
+
+              case System_1.SystemEventType.SEQ_NOT_FOUND:
+                {
+                  logs_2 = __spreadArray(__spreadArray([], __read(toBeUpdatedLogs)), [{
+                    level: LogLevel.Error,
+                    content: "\u672A\u627E\u5230\u5B89\u5168\u5E8F\u5217\uFF0C\u5F53\u524D\u65F6\u523B\u7CFB\u7EDF\u4E0D\u5B89\u5168\uFF01"
+                  }]);
+                  setLogs(logs_2);
                   break;
                 }
             }

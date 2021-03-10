@@ -40,7 +40,7 @@ function App() {
     const [preValues, setPreValues] = useState(new Map())
     const [readOnly, setReadOnly] = useState(false)
     const [workInfo, setWorkInfo] = useState({})
-    const [logs, setLogs] = useState([{ level: LogLevel.Info, content: '模拟器已启动！' } as Log])
+    const [logs, setLogs] = useState([{ level: LogLevel.Info, content: '点击按钮开始进行安全性检查' } as Log])
 
     const toFlexAround = (type: InputGroupType, row: number, arr: number[]) => {
         const shouldHighlight = (row: number, index: number, num: number): string => {
@@ -74,14 +74,12 @@ function App() {
         ))
     }
 
-    const appendLog = (log: Log) => {
-        const toBeUpdatedLogs = [...logs, log]
-        setLogs(toBeUpdatedLogs)
-    }
-
     const checkSystemSafety = async () => {
+        const toBeUpdatedLogs = [...logs]
+
         setReadOnly(true)
-        appendLog({ level: LogLevel.Info, content: '开始检查系统安全性...' })
+        toBeUpdatedLogs.push({ level: LogLevel.Info, content: '开始检查系统安全性...' })
+        setLogs(toBeUpdatedLogs)
 
         System.isSafe()
 
@@ -95,6 +93,22 @@ function App() {
                     const toBeUpdatedProcs = [...processes]
                     toBeUpdatedProcs[event.payload].isFinish = true
                     setProcesses(toBeUpdatedProcs)
+                    break
+                }
+                case SystemEventType.SEQ_FOUND: {
+                    const logs = [...toBeUpdatedLogs, {
+                        level: LogLevel.Warn,
+                        content: `找到安全序列： ${ event.payload }，当前时刻系统安全！`
+                    }]
+                    setLogs(logs)
+                    break
+                }
+                case SystemEventType.SEQ_NOT_FOUND: {
+                    const logs = [...toBeUpdatedLogs, {
+                        level: LogLevel.Error,
+                        content: `未找到安全序列，当前时刻系统不安全！`
+                    }]
+                    setLogs(logs)
                     break
                 }
             }

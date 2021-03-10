@@ -24,6 +24,8 @@ export enum SystemEventType {
     INIT,
     MOVE_WORKVEC,
     PROCESS_FINISH,
+    SEQ_FOUND,
+    SEQ_NOT_FOUND,
     EXIT
 }
 
@@ -48,6 +50,8 @@ export interface SystemEventPayload {
      * 进程id
      */
     [SystemEventType.PROCESS_FINISH]: number
+    [SystemEventType.SEQ_FOUND]: string
+    [SystemEventType.SEQ_NOT_FOUND]: void
 }
 
 export interface SystemEvent<K extends keyof SystemEventPayload> {
@@ -154,7 +158,9 @@ export const System = new class {
             const seq = this._safeSequence
                 .map(id => this._processes[id].name || id)
                 .join()
-            console.log(`<${ seq }>`)
+            this.emit(SystemEventType.SEQ_FOUND, `<${ seq }>`)
+        } else {
+            this.emit(SystemEventType.SEQ_NOT_FOUND)
         }
 
         return isSafe
