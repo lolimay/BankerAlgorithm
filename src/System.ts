@@ -23,6 +23,7 @@ export interface Process {
 export enum SystemEventType {
     INIT,
     MOVE_WORKVEC,
+    PROCESS_FINISH,
     EXIT
 }
 
@@ -43,6 +44,10 @@ export interface SystemEventPayload {
          */
         executable: boolean
     }
+    /**
+     * 进程id
+     */
+    [SystemEventType.PROCESS_FINISH]: number
 }
 
 export interface SystemEvent<K extends keyof SystemEventPayload> {
@@ -129,6 +134,7 @@ export const System = new class {
                     this._safeSequence.push(i)
 
                     this.emit(SystemEventType.MOVE_WORKVEC, { ...moveWorkVecPayload, executable: true })
+                    this.emit(SystemEventType.PROCESS_FINISH, i)
                 } else {
                     this.emit(SystemEventType.MOVE_WORKVEC, { ...moveWorkVecPayload, executable: false })
                 }

@@ -43,6 +43,17 @@ function App() {
     const [logs, setLogs] = useState([{ level: LogLevel.Info, content: '模拟器已启动！' } as Log])
 
     const toFlexAround = (type: InputGroupType, row: number, arr: number[]) => {
+        const shouldHighlight = (row: number, index: number, num: number): string => {
+            if (type === InputGroupType.Need && workInfo?.id === row) {
+                if (workInfo.work[index] >= num) {
+                    return 'green'
+                } else {
+                    return 'red'
+                }
+            }
+            return ''
+        }
+
         return arr.map((num, index) => (
             <input
                 type='number'
@@ -55,6 +66,10 @@ function App() {
                 onFocus={onInputFocus}
                 onChange={onInputChange}
                 disabled={readOnly}
+                style={{
+                    color: shouldHighlight(row, index, num),
+                    fontWeight: shouldHighlight(row, index, num) ? 'bold' : ''
+                }}
             ></input>
         ))
     }
@@ -73,6 +88,12 @@ function App() {
             switch (event.type) {
                 case SystemEventType.MOVE_WORKVEC: {
                     setWorkInfo(event.payload)
+                    break
+                }
+                case SystemEventType.PROCESS_FINISH: {
+                    const toBeUpdatedProcs = [...processes]
+                    toBeUpdatedProcs[event.payload].isFinish = true
+                    setProcesses(toBeUpdatedProcs)
                     break
                 }
             }

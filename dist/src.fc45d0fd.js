@@ -30062,7 +30062,8 @@ var SystemEventType;
 (function (SystemEventType) {
   SystemEventType[SystemEventType["INIT"] = 0] = "INIT";
   SystemEventType[SystemEventType["MOVE_WORKVEC"] = 1] = "MOVE_WORKVEC";
-  SystemEventType[SystemEventType["EXIT"] = 2] = "EXIT";
+  SystemEventType[SystemEventType["PROCESS_FINISH"] = 2] = "PROCESS_FINISH";
+  SystemEventType[SystemEventType["EXIT"] = 3] = "EXIT";
 })(SystemEventType = exports.SystemEventType || (exports.SystemEventType = {}));
 
 exports.System = new (
@@ -30187,6 +30188,7 @@ function () {
             this.emit(SystemEventType.MOVE_WORKVEC, __assign(__assign({}, moveWorkVecPayload), {
               executable: true
             }));
+            this.emit(SystemEventType.PROCESS_FINISH, i);
           } else {
             this.emit(SystemEventType.MOVE_WORKVEC, __assign(__assign({}, moveWorkVecPayload), {
               executable: false
@@ -30686,6 +30688,18 @@ function App() {
       setLogs = _f[1];
 
   var toFlexAround = function toFlexAround(type, row, arr) {
+    var shouldHighlight = function shouldHighlight(row, index, num) {
+      if (type === InputGroupType.Need && (workInfo === null || workInfo === void 0 ? void 0 : workInfo.id) === row) {
+        if (workInfo.work[index] >= num) {
+          return 'green';
+        } else {
+          return 'red';
+        }
+      }
+
+      return '';
+    };
+
     return arr.map(function (num, index) {
       return react_1.default.createElement("input", {
         type: 'number',
@@ -30697,7 +30711,11 @@ function App() {
         key: index,
         onFocus: onInputFocus,
         onChange: onInputChange,
-        disabled: readOnly
+        disabled: readOnly,
+        style: {
+          color: shouldHighlight(row, index, num),
+          fontWeight: shouldHighlight(row, index, num) ? 'bold' : ''
+        }
       });
     });
   };
@@ -30710,7 +30728,7 @@ function App() {
 
   var checkSystemSafety = function checkSystemSafety() {
     return __awaiter(_this, void 0, void 0, function () {
-      var isSafe, _a, _b, event, e_1_1;
+      var isSafe, _a, _b, event, toBeUpdatedProcs, e_1_1;
 
       var e_1, _c;
 
@@ -30741,6 +30759,14 @@ function App() {
               case System_1.SystemEventType.MOVE_WORKVEC:
                 {
                   setWorkInfo(event.payload);
+                  break;
+                }
+
+              case System_1.SystemEventType.PROCESS_FINISH:
+                {
+                  toBeUpdatedProcs = __spreadArray([], __read(processes));
+                  toBeUpdatedProcs[event.payload].isFinish = true;
+                  setProcesses(toBeUpdatedProcs);
                   break;
                 }
             }
