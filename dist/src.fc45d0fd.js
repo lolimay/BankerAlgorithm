@@ -29772,8 +29772,470 @@ if ("development" === 'production') {
 } else {
   module.exports = require('./cjs/react-dom.development.js');
 }
-},{"./cjs/react-dom.development.js":"node_modules/react-dom/cjs/react-dom.development.js"}],"src/index.tsx":[function(require,module,exports) {
+},{"./cjs/react-dom.development.js":"node_modules/react-dom/cjs/react-dom.development.js"}],"../../../../.nvm/versions/node/v12.13.0/lib/node_modules/parcel-bundler/node_modules/process/browser.js":[function(require,module,exports) {
+
+// shim for using process in browser
+var process = module.exports = {}; // cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+  throw new Error('setTimeout has not been defined');
+}
+
+function defaultClearTimeout() {
+  throw new Error('clearTimeout has not been defined');
+}
+
+(function () {
+  try {
+    if (typeof setTimeout === 'function') {
+      cachedSetTimeout = setTimeout;
+    } else {
+      cachedSetTimeout = defaultSetTimout;
+    }
+  } catch (e) {
+    cachedSetTimeout = defaultSetTimout;
+  }
+
+  try {
+    if (typeof clearTimeout === 'function') {
+      cachedClearTimeout = clearTimeout;
+    } else {
+      cachedClearTimeout = defaultClearTimeout;
+    }
+  } catch (e) {
+    cachedClearTimeout = defaultClearTimeout;
+  }
+})();
+
+function runTimeout(fun) {
+  if (cachedSetTimeout === setTimeout) {
+    //normal enviroments in sane situations
+    return setTimeout(fun, 0);
+  } // if setTimeout wasn't available but was latter defined
+
+
+  if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+    cachedSetTimeout = setTimeout;
+    return setTimeout(fun, 0);
+  }
+
+  try {
+    // when when somebody has screwed with setTimeout but no I.E. maddness
+    return cachedSetTimeout(fun, 0);
+  } catch (e) {
+    try {
+      // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+      return cachedSetTimeout.call(null, fun, 0);
+    } catch (e) {
+      // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+      return cachedSetTimeout.call(this, fun, 0);
+    }
+  }
+}
+
+function runClearTimeout(marker) {
+  if (cachedClearTimeout === clearTimeout) {
+    //normal enviroments in sane situations
+    return clearTimeout(marker);
+  } // if clearTimeout wasn't available but was latter defined
+
+
+  if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+    cachedClearTimeout = clearTimeout;
+    return clearTimeout(marker);
+  }
+
+  try {
+    // when when somebody has screwed with setTimeout but no I.E. maddness
+    return cachedClearTimeout(marker);
+  } catch (e) {
+    try {
+      // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+      return cachedClearTimeout.call(null, marker);
+    } catch (e) {
+      // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+      // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+      return cachedClearTimeout.call(this, marker);
+    }
+  }
+}
+
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+  if (!draining || !currentQueue) {
+    return;
+  }
+
+  draining = false;
+
+  if (currentQueue.length) {
+    queue = currentQueue.concat(queue);
+  } else {
+    queueIndex = -1;
+  }
+
+  if (queue.length) {
+    drainQueue();
+  }
+}
+
+function drainQueue() {
+  if (draining) {
+    return;
+  }
+
+  var timeout = runTimeout(cleanUpNextTick);
+  draining = true;
+  var len = queue.length;
+
+  while (len) {
+    currentQueue = queue;
+    queue = [];
+
+    while (++queueIndex < len) {
+      if (currentQueue) {
+        currentQueue[queueIndex].run();
+      }
+    }
+
+    queueIndex = -1;
+    len = queue.length;
+  }
+
+  currentQueue = null;
+  draining = false;
+  runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+  var args = new Array(arguments.length - 1);
+
+  if (arguments.length > 1) {
+    for (var i = 1; i < arguments.length; i++) {
+      args[i - 1] = arguments[i];
+    }
+  }
+
+  queue.push(new Item(fun, args));
+
+  if (queue.length === 1 && !draining) {
+    runTimeout(drainQueue);
+  }
+}; // v8 likes predictible objects
+
+
+function Item(fun, array) {
+  this.fun = fun;
+  this.array = array;
+}
+
+Item.prototype.run = function () {
+  this.fun.apply(null, this.array);
+};
+
+process.title = 'browser';
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) {
+  return [];
+};
+
+process.binding = function (name) {
+  throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () {
+  return '/';
+};
+
+process.chdir = function (dir) {
+  throw new Error('process.chdir is not supported');
+};
+
+process.umask = function () {
+  return 0;
+};
+},{}],"src/System.ts":[function(require,module,exports) {
+var process = require("process");
 "use strict";
+
+var __values = this && this.__values || function (o) {
+  var s = typeof Symbol === "function" && Symbol.iterator,
+      m = s && o[s],
+      i = 0;
+  if (m) return m.call(o);
+  if (o && typeof o.length === "number") return {
+    next: function next() {
+      if (o && i >= o.length) o = void 0;
+      return {
+        value: o && o[i++],
+        done: !o
+      };
+    }
+  };
+  throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+};
+
+var __read = this && this.__read || function (o, n) {
+  var m = typeof Symbol === "function" && o[Symbol.iterator];
+  if (!m) return o;
+  var i = m.call(o),
+      r,
+      ar = [],
+      e;
+
+  try {
+    while ((n === void 0 || n-- > 0) && !(r = i.next()).done) {
+      ar.push(r.value);
+    }
+  } catch (error) {
+    e = {
+      error: error
+    };
+  } finally {
+    try {
+      if (r && !r.done && (m = i["return"])) m.call(i);
+    } finally {
+      if (e) throw e.error;
+    }
+  }
+
+  return ar;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.System = void 0;
+exports.System = new (
+/** @class */
+function () {
+  function class_1() {
+    /**
+     * 系统进程
+     */
+    this._processes = [];
+    /**
+     * 系统资源当前可用总量
+     */
+
+    this._availableResources = [];
+    /**
+     * 当前可分配资源
+     */
+
+    this._work = [];
+    /**
+     * 安全序列
+     */
+
+    this._safeSequence = [];
+  }
+
+  Object.defineProperty(class_1.prototype, "totalProcesses", {
+    get: function get() {
+      return this._processes.length;
+    },
+    enumerable: false,
+    configurable: true
+  });
+
+  class_1.prototype.setProcesses = function (processes) {
+    this._processes = processes;
+    return this;
+  };
+
+  class_1.prototype.setAvailableResources = function (resources) {
+    this._availableResources = resources;
+    return this;
+  };
+  /**
+   * 安全判定算法
+   */
+
+
+  class_1.prototype.isSafe = function () {
+    var e_1, _a;
+
+    var _this = this; // 初始化
+
+
+    this._work = this._availableResources; // 动态记录当前剩余资源
+
+    this._processes.forEach(function (process) {
+      return process.isFinish = false;
+    }); // 设定所有进程均未完成
+
+
+    this._safeSequence = []; // 设置安全序列为空
+    // 不断查找可执行进程 (未完成但目前资源可满足其需要，这样的进程是能够完成的)
+
+    while (true) {
+      var isFound = false; // 是否在未完成的进程中找到可执行进程
+
+      try {
+        for (var _b = (e_1 = void 0, __values(this._processes.entries())), _c = _b.next(); !_c.done; _c = _b.next()) {
+          var _d = __read(_c.value, 2),
+              i = _d[0],
+              proc = _d[1]; // 忽略已完成的进程
+
+
+          if (proc.isFinish) {
+            continue;
+          } // 如果存在可执行进程，则该进程一定能完成，并归还其占用的资源
+
+
+          if (!proc.isFinish && proc.needs.every(function (need, i) {
+            return need <= _this._work[i];
+          })) {
+            proc.isFinish = true;
+            proc.allocations.forEach(function (alloc, i) {
+              return _this._work[i] += alloc;
+            });
+            isFound = true;
+
+            this._safeSequence.push(i);
+
+            console.log(this._safeSequence);
+          }
+        }
+      } catch (e_1_1) {
+        e_1 = {
+          error: e_1_1
+        };
+      } finally {
+        try {
+          if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+        } finally {
+          if (e_1) throw e_1.error;
+        }
+      }
+
+      console.log(this._safeSequence); // 如果找不到可执行进程了，则可能有两种情况
+      // 1. 所有进程都已完成，系统是安全的
+      // 2. 至少存在一个进程不可执行，存在死锁，此时系统是不安全的
+
+      if (!isFound) break;
+    } // 系统是否安全的依据是所有进程是否都已成功执行结束
+
+
+    return this._processes.every(function (_a) {
+      var isFinish = _a.isFinish;
+      return isFinish;
+    });
+  };
+  /**
+   * 资源请求算法
+   *
+   * @param process 需要申请资源的进程
+   * @param requests 需要申请的资源数
+   *
+   * @returns
+   */
+
+
+  class_1.prototype.requestResource = function (process, requests) {
+    var _this = this; // 如果申请的资源大于该进程需要的资源，则申请失败
+    // (规则：进程实际申请的资源不能大于其需要的资源)
+
+
+    if (requests.some(function (request, i) {
+      return request > process.needs[i];
+    })) {
+      return false;
+    } // 如果申请的资源大于系统剩余可用的资源，则申请失败
+
+
+    if (requests.some(function (requests, i) {
+      return requests > _this._availableResources[i];
+    })) {
+      return false;
+    } // 尝试分配资源
+
+
+    requests.forEach(function (request, i) {
+      _this._availableResources[i] -= request;
+      process.allocations[i] += request;
+      process.needs[i] -= request;
+    }); // 调用安全判定算法，检查系统是否安全
+
+    if (this.isSafe()) {
+      return true;
+    } else {
+      // 申请失败，资源回滚
+      requests.forEach(function (request, i) {
+        _this._availableResources[i] += request;
+        process.allocations[i] -= request;
+        process.needs[i] += request;
+      });
+      return false;
+    }
+  };
+
+  return class_1;
+}())();
+},{"process":"../../../../.nvm/versions/node/v12.13.0/lib/node_modules/parcel-bundler/node_modules/process/browser.js"}],"src/index.tsx":[function(require,module,exports) {
+"use strict";
+
+var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  Object.defineProperty(o, k2, {
+    enumerable: true,
+    get: function get() {
+      return m[k];
+    }
+  });
+} : function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  o[k2] = m[k];
+});
+
+var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
+  Object.defineProperty(o, "default", {
+    enumerable: true,
+    value: v
+  });
+} : function (o, v) {
+  o["default"] = v;
+});
+
+var __importStar = this && this.__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) {
+    if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+  }
+
+  __setModuleDefault(result, mod);
+
+  return result;
+};
 
 var __importDefault = this && this.__importDefault || function (mod) {
   return mod && mod.__esModule ? mod : {
@@ -29787,14 +30249,40 @@ Object.defineProperty(exports, "__esModule", {
 
 var react_dom_1 = __importDefault(require("react-dom"));
 
-var react_1 = __importDefault(require("react"));
+var react_1 = __importStar(require("react"));
+
+var System_1 = require("./System");
 
 function App() {
+  react_1.useEffect(function () {
+    var isSafe = System_1.System.setAvailableResources([3, 3, 2]).setProcesses([{
+      allocations: [0, 1, 0],
+      needs: [7, 4, 3],
+      isFinish: false
+    }, {
+      allocations: [2, 0, 0],
+      needs: [1, 2, 2],
+      isFinish: false
+    }, {
+      allocations: [3, 0, 2],
+      needs: [6, 0, 0],
+      isFinish: false
+    }, {
+      allocations: [2, 1, 1],
+      needs: [0, 1, 1],
+      isFinish: false
+    }, {
+      allocations: [0, 0, 2],
+      needs: [4, 3, 1],
+      isFinish: false
+    }]).isSafe();
+    console.log(isSafe);
+  }, []);
   return react_1.default.createElement("div", null, "Hello World!");
 }
 
 react_dom_1.default.render(react_1.default.createElement(App, null), document.getElementById('root'));
-},{"react-dom":"node_modules/react-dom/index.js","react":"node_modules/react/index.js"}],"../../../../.nvm/versions/node/v12.13.0/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"react-dom":"node_modules/react-dom/index.js","react":"node_modules/react/index.js","./System":"src/System.ts"}],"../../../../.nvm/versions/node/v12.13.0/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -29822,7 +30310,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61978" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57918" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
