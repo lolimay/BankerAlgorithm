@@ -4,6 +4,10 @@ import { Process, System } from './System'
 
 import './index.scss'
 
+export const getFormattedTime = () => {
+    return new Date().toLocaleString('zh-Hans-CN', { hour12: false })
+}
+
 const defaultResources = [2, 3, 2]
 const defaultProcesses = [
     { name: 'P1', allocations: [2, 1, 2], needs: [3, 4, 7], isFinish: false },
@@ -19,10 +23,22 @@ enum InputGroupType {
     Need
 }
 
+enum LogLevel {
+    Error = 'red',
+    Warn = 'yellow',
+    Info = 'white'
+}
+
+interface Log {
+    level: LogLevel
+    content: string
+}
+
 function App() {
     const [resources, setResources] = useState(defaultResources)
     const [processes, setProcesses] = useState(defaultProcesses)
     const [preValues, setPreValues] = useState(new Map())
+    const [logs, setLogs] = useState([{ level: LogLevel.Info, content: '模拟器已启动！' } as Log])
 
     const toFlexAround = (type: InputGroupType, row: number, arr: number[]) => {
         return arr.map((num, index) => (
@@ -170,6 +186,7 @@ function App() {
                             <td>仍需要资源数 (Need)</td>
                             <td>进程状态 (Finish)</td>
                             <td>工作向量 (Work)</td>
+                            <td>进程是否可执行 (Executable)</td>
                         </tr>
                         {
                             processes.map(({ name, allocations, needs, isFinish }, index) => (
@@ -180,6 +197,7 @@ function App() {
                                     <td
                                         style={{ color: isFinish ? 'red' : 'green' }}
                                     >{isFinish ? '已完成' : '运行中'}</td>
+                                    <td></td>
                                     <td></td>
                                 </tr>
                             ))
@@ -208,6 +226,9 @@ function App() {
                         <button>申请资源</button>
                     </div>
                 </div>
+                <div className='logs'>{logs.map(({ level, content }) => (
+                    <p style={{ color: level }}>{`[${ getFormattedTime() }] ${ content }`}</p>
+                ))}</div>
             </div>
         </>
     )

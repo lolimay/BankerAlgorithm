@@ -30378,6 +30378,7 @@ var __importDefault = this && this.__importDefault || function (mod) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.getFormattedTime = void 0;
 
 var react_dom_1 = __importDefault(require("react-dom"));
 
@@ -30387,6 +30388,13 @@ var System_1 = require("./System");
 
 require("./index.scss");
 
+var getFormattedTime = function getFormattedTime() {
+  return new Date().toLocaleString('zh-Hans-CN', {
+    hour12: false
+  });
+};
+
+exports.getFormattedTime = getFormattedTime;
 var defaultResources = [2, 3, 2];
 var defaultProcesses = [{
   name: 'P1',
@@ -30422,6 +30430,14 @@ var InputGroupType;
   InputGroupType[InputGroupType["Need"] = 2] = "Need";
 })(InputGroupType || (InputGroupType = {}));
 
+var LogLevel;
+
+(function (LogLevel) {
+  LogLevel["Error"] = "red";
+  LogLevel["Warn"] = "yellow";
+  LogLevel["Info"] = "white";
+})(LogLevel || (LogLevel = {}));
+
 function App() {
   var _a = __read(react_1.useState(defaultResources), 2),
       resources = _a[0],
@@ -30434,6 +30450,13 @@ function App() {
   var _c = __read(react_1.useState(new Map()), 2),
       preValues = _c[0],
       setPreValues = _c[1];
+
+  var _d = __read(react_1.useState([{
+    level: LogLevel.Info,
+    content: '模拟器已启动！'
+  }]), 2),
+      logs = _d[0],
+      setLogs = _d[1];
 
   var toFlexAround = function toFlexAround(type, row, arr) {
     return arr.map(function (num, index) {
@@ -30617,7 +30640,7 @@ function App() {
     onChange: onInputChange
   })), react_1.default.createElement("td", {
     className: 'flex-around'
-  }, toFlexAround(InputGroupType.Available, 0, resources))))), react_1.default.createElement("table", null, react_1.default.createElement("tbody", null, react_1.default.createElement("tr", null, react_1.default.createElement("td", null, "\u8FDB\u7A0B\u540D (Process)"), react_1.default.createElement("td", null, "\u5DF2\u5206\u914D\u8D44\u6E90\u6570 (Allocation)"), react_1.default.createElement("td", null, "\u4ECD\u9700\u8981\u8D44\u6E90\u6570 (Need)"), react_1.default.createElement("td", null, "\u8FDB\u7A0B\u72B6\u6001 (Finish)"), react_1.default.createElement("td", null, "\u5DE5\u4F5C\u5411\u91CF (Work)")), processes.map(function (_a, index) {
+  }, toFlexAround(InputGroupType.Available, 0, resources))))), react_1.default.createElement("table", null, react_1.default.createElement("tbody", null, react_1.default.createElement("tr", null, react_1.default.createElement("td", null, "\u8FDB\u7A0B\u540D (Process)"), react_1.default.createElement("td", null, "\u5DF2\u5206\u914D\u8D44\u6E90\u6570 (Allocation)"), react_1.default.createElement("td", null, "\u4ECD\u9700\u8981\u8D44\u6E90\u6570 (Need)"), react_1.default.createElement("td", null, "\u8FDB\u7A0B\u72B6\u6001 (Finish)"), react_1.default.createElement("td", null, "\u5DE5\u4F5C\u5411\u91CF (Work)"), react_1.default.createElement("td", null, "\u8FDB\u7A0B\u662F\u5426\u53EF\u6267\u884C (Executable)")), processes.map(function (_a, index) {
     var name = _a.name,
         allocations = _a.allocations,
         needs = _a.needs,
@@ -30635,7 +30658,7 @@ function App() {
       style: {
         color: isFinish ? 'red' : 'green'
       }
-    }, isFinish ? '已完成' : '运行中'), react_1.default.createElement("td", null));
+    }, isFinish ? '已完成' : '运行中'), react_1.default.createElement("td", null), react_1.default.createElement("td", null));
   }))), react_1.default.createElement("div", {
     className: 'panel'
   }, react_1.default.createElement("div", {
@@ -30656,7 +30679,17 @@ function App() {
       defaultValue: '0',
       onFocus: onInputFocus
     });
-  }), react_1.default.createElement("button", null, "\u7533\u8BF7\u8D44\u6E90")))));
+  }), react_1.default.createElement("button", null, "\u7533\u8BF7\u8D44\u6E90"))), react_1.default.createElement("div", {
+    className: 'logs'
+  }, logs.map(function (_a) {
+    var level = _a.level,
+        content = _a.content;
+    return react_1.default.createElement("p", {
+      style: {
+        color: level
+      }
+    }, "[" + exports.getFormattedTime() + "] " + content);
+  }))));
 }
 
 react_dom_1.default.render(react_1.default.createElement(App, null), document.getElementById('root'));
