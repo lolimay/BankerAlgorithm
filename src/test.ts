@@ -39,4 +39,5 @@ it('资源分配算法 OK', () => {
     assert(system.isSafe())
     assert(system.assignResources('P2', [0, 3, 4]) === false)
     assert(system.assignResources('P4', [2, 0, 1]))
+    assert(system.assignResources('P1', [0, 2, 0]) === false)
 })
