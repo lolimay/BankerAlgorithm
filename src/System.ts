@@ -103,7 +103,7 @@ export const System = new class {
     /**
      * 资源分配算法
      * 
-     * @param process 需要申请资源的进程id
+     * @param id 需要申请资源的进程id
      * @param requests 需要申请的资源数
      * 
      * @returns 资源分配是否成功
@@ -112,7 +112,7 @@ export const System = new class {
     /**
      * 资源分配算法
      * 
-     * @param process 需要申请资源的进程id
+     * @param name 需要申请资源的进程名
      * @param requests 需要申请的资源数
      * 
      * @returns 资源分配是否成功
