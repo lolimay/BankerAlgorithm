@@ -29983,7 +29983,7 @@ process.umask = function () {
 };
 },{}],"src/System.ts":[function(require,module,exports) {
 var process = require("process");
-"use strict";
+"use strict"; // https://www.cnblogs.com/chuxiuhong/p/6103928.html
 
 var __values = this && this.__values || function (o) {
   var s = typeof Symbol === "function" && Symbol.iterator,
@@ -30149,23 +30149,27 @@ function () {
 
 
     if (isSafe) {
-      console.log(this._safeSequence);
+      var seq = this._safeSequence.map(function (id) {
+        return _this._processes[id].name || id;
+      }).join();
+
+      console.log("<" + seq + ">");
     }
 
     return isSafe;
   };
-  /**
-   * 资源请求算法
-   *
-   * @param process 需要申请资源的进程
-   * @param requests 需要申请的资源数
-   *
-   * @returns
-   */
 
+  class_1.prototype.requestResource = function (id, requests) {
+    var _this = this;
 
-  class_1.prototype.requestResource = function (process, requests) {
-    var _this = this; // 如果申请的资源大于该进程需要的资源，则申请失败
+    var process = this._processes[id];
+
+    if (typeof id === 'string') {
+      process = this._processes.find(function (_a) {
+        var name = _a.name;
+        return name === id;
+      });
+    } // 如果申请的资源大于该进程需要的资源，则申请失败
     // (规则：进程实际申请的资源不能大于其需要的资源)
 
 

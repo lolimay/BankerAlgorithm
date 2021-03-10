@@ -1,4 +1,10 @@
+// https://www.cnblogs.com/chuxiuhong/p/6103928.html
+
 interface Process {
+    /**
+     * 进程名
+     */
+    name?: string
     /**
      * 进程还需要各种资源数量
      */
@@ -85,7 +91,10 @@ export const System = new class {
 
         // 打印安全序列
         if (isSafe) {
-            console.log(this._safeSequence)
+            const seq = this._safeSequence
+                .map(id => this._processes[id].name || id)
+                .join()
+            console.log(`<${ seq }>`)
         }
 
         return isSafe
@@ -94,12 +103,28 @@ export const System = new class {
     /**
      * 资源请求算法
      * 
-     * @param process 需要申请资源的进程
+     * @param process 需要申请资源的进程id
      * @param requests 需要申请的资源数
      * 
-     * @returns 
+     * @returns 资源请求是否成功
      */
-    public requestResource(process: Process, requests: number[]): boolean {
+    public requestResource(id: number, requests: number[]): boolean;
+    /**
+     * 资源请求算法
+     * 
+     * @param process 需要申请资源的进程id
+     * @param requests 需要申请的资源数
+     * 
+     * @returns 资源请求是否成功
+     */
+    public requestResource(name: string, requests: number[]): boolean;
+    public requestResource(id: number | string, requests: number[]): boolean {
+        let process = this._processes[id]
+
+        if (typeof id === 'string') {
+            process = this._processes.find(({ name }) => name === id)
+        }
+
         // 如果申请的资源大于该进程需要的资源，则申请失败
         // (规则：进程实际申请的资源不能大于其需要的资源)
         if (requests.some((request, i) => request > process.needs[i])) {
