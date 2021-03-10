@@ -30411,7 +30411,7 @@ function App() {
         max: '99',
         className: 'hidden-input',
         defaultValue: num,
-        onFocus: onCategoriesFocus,
+        onFocus: onFocusSelected,
         key: index
       });
     });
@@ -30421,9 +30421,8 @@ function App() {
     System_1.System.setProcesses(processes).setAvailableResources(resources);
   }, [resources, processes]);
 
-  var onCategoriesFocus = function onCategoriesFocus(ev) {
-    ev.target.select();
-    ev.target.value();
+  var onFocusSelected = function onFocusSelected(ev) {
+    return ev.target.select();
   };
 
   return react_1.default.createElement(react_1.default.Fragment, null, react_1.default.createElement("div", {
@@ -30436,14 +30435,14 @@ function App() {
     max: '99',
     className: 'hidden-input',
     defaultValue: processes.length,
-    onFocus: onCategoriesFocus
+    onFocus: onFocusSelected
   })), react_1.default.createElement("td", null, react_1.default.createElement("input", {
     type: 'number',
     min: '0',
     max: '99',
     className: 'hidden-input',
     defaultValue: resources.length,
-    onFocus: onCategoriesFocus
+    onFocus: onFocusSelected
   })), react_1.default.createElement("td", {
     className: 'flex-around'
   }, toFlexAround(resources))))), react_1.default.createElement("table", null, react_1.default.createElement("tbody", null, react_1.default.createElement("tr", null, react_1.default.createElement("td", null, "\u8FDB\u7A0B\u540D (Process)"), react_1.default.createElement("td", null, "\u5DF2\u5206\u914D\u8D44\u6E90\u6570 (Allocation)"), react_1.default.createElement("td", null, "\u4ECD\u9700\u8981\u8D44\u6E90\u6570 (Need)"), react_1.default.createElement("td", null, "\u8FDB\u7A0B\u72B6\u6001 (Finish)")), processes.map(function (_a, index) {
@@ -30483,7 +30482,7 @@ function App() {
       min: '0',
       max: '99',
       defaultValue: '0',
-      onFocus: onCategoriesFocus
+      onFocus: onFocusSelected
     });
   }), react_1.default.createElement("button", null, "\u7533\u8BF7\u8D44\u6E90")))));
 }

@@ -26,7 +26,7 @@ function App() {
                 max='99'
                 className='hidden-input'
                 defaultValue={num}
-                onFocus={onCategoriesFocus}
+                onFocus={onFocusSelected}
                 key={index}
             ></input>
         ))
@@ -36,10 +36,7 @@ function App() {
         System.setProcesses(processes).setAvailableResources(resources)
     }, [resources, processes])
 
-    const onCategoriesFocus = ev => {
-        ev.target.select()
-        ev.target.value()
-    }
+    const onFocusSelected = ev => ev.target.select()
 
     return (
         <>
@@ -59,7 +56,7 @@ function App() {
                                 max='99'
                                 className='hidden-input'
                                 defaultValue={processes.length}
-                                onFocus={onCategoriesFocus}
+                                onFocus={onFocusSelected}
                             >
                             </input></td>
                             <td><input
@@ -68,7 +65,7 @@ function App() {
                                 max='99'
                                 className='hidden-input'
                                 defaultValue={resources.length}
-                                onFocus={onCategoriesFocus}
+                                onFocus={onFocusSelected}
                             >
                             </input></td>
                             <td className='flex-around'>{toFlexAround(resources)}</td>
@@ -113,7 +110,7 @@ function App() {
                                 min='0'
                                 max='99'
                                 defaultValue='0'
-                                onFocus={onCategoriesFocus}
+                                onFocus={onFocusSelected}
                             ></input>
                         ))}
                         <button>申请资源</button>
