@@ -30121,8 +30121,6 @@ function () {
             isFound = true;
 
             this._safeSequence.push(i);
-
-            console.log(this._safeSequence);
           }
         }
       } catch (e_1_1) {
@@ -30135,20 +30133,26 @@ function () {
         } finally {
           if (e_1) throw e_1.error;
         }
-      }
-
-      console.log(this._safeSequence); // 如果找不到可执行进程了，则可能有两种情况
+      } // 如果找不到可执行进程了，则可能有两种情况
       // 1. 所有进程都已完成，系统是安全的
       // 2. 至少存在一个进程不可执行，存在死锁，此时系统是不安全的
+
 
       if (!isFound) break;
     } // 系统是否安全的依据是所有进程是否都已成功执行结束
 
 
-    return this._processes.every(function (_a) {
+    var isSafe = this._processes.every(function (_a) {
       var isFinish = _a.isFinish;
       return isFinish;
-    });
+    }); // 打印安全序列
+
+
+    if (isSafe) {
+      console.log(this._safeSequence);
+    }
+
+    return isSafe;
   };
   /**
    * 资源请求算法

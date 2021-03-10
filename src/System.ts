@@ -71,11 +71,9 @@ export const System = new class {
                     proc.allocations.forEach((alloc, i) => this._work[i] += alloc)
                     isFound = true
                     this._safeSequence.push(i)
-                    console.log(this._safeSequence)
                 }
             }
 
-            console.log(this._safeSequence)
             // 如果找不到可执行进程了，则可能有两种情况
             // 1. 所有进程都已完成，系统是安全的
             // 2. 至少存在一个进程不可执行，存在死锁，此时系统是不安全的
@@ -83,7 +81,14 @@ export const System = new class {
         }
 
         // 系统是否安全的依据是所有进程是否都已成功执行结束
-        return this._processes.every(({ isFinish }) => isFinish)
+        const isSafe = this._processes.every(({ isFinish }) => isFinish)
+
+        // 打印安全序列
+        if (isSafe) {
+            console.log(this._safeSequence)
+        }
+
+        return isSafe
     }
 
     /**
