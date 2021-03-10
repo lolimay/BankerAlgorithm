@@ -1,6 +1,6 @@
 import ReactDOM from 'react-dom'
 import React, { useState, useEffect } from 'react'
-import { System } from './System'
+import { Process, System } from './System'
 
 import './index.scss'
 
@@ -13,12 +13,18 @@ const defaultProcesses = [
     { name: 'P5', allocations: [3, 1, 4], needs: [1, 1, 0], isFinish: false },
 ]
 
+enum InputGroupType {
+    Available,
+    Allocation,
+    Need
+}
+
 function App() {
     const [resources, setResources] = useState(defaultResources)
     const [processes, setProcesses] = useState(defaultProcesses)
-    const [preValues, setPreValues] = useState({})
+    const [preValues, setPreValues] = useState(new Map())
 
-    const toFlexAround = (arr: number[]) => {
+    const toFlexAround = (type: InputGroupType, row: number, arr: number[]) => {
         return arr.map((num, index) => (
             <input
                 type='number'
@@ -26,8 +32,10 @@ function App() {
                 max='99'
                 className='hidden-input'
                 defaultValue={num}
-                onFocus={onFocusSelected}
+                id={`${ type }-${ row }-${ index }`}
                 key={index}
+                onFocus={onInputFocus}
+                onChange={onInputChange}
             ></input>
         ))
     }
@@ -36,7 +44,64 @@ function App() {
         System.setProcesses(processes).setAvailableResources(resources)
     }, [resources, processes])
 
-    const onFocusSelected = ev => ev.target.select()
+    const createEmptyProcess = (index: number, resourceCategories: number) => ({
+        name: `P${ index }`,
+        allocations: Array.from({ length: resourceCategories }, () => 0),
+        needs: Array.from({ length: resourceCategories }, () => 0),
+        isFinish: false
+    } as Process)
+
+    const onInputFocus = ev => {
+        const element = ev.target
+
+        element.select()
+        preValues.set(element, element.value)
+    }
+    const onInputChange = ev => {
+        const element = ev.target
+        const diff = element.value - preValues.get(element)
+
+        switch (element.id) {
+            case 'processes': {
+                if (diff >= 0) {
+                    const diffs = Array.from({ length: diff }, () => createEmptyProcess(parseInt(element.value), resources.length))
+                    setProcesses([...processes, ...diffs])
+                } else {
+                    setProcesses(processes.slice(0, parseInt(element.value)))
+                }
+                break
+            }
+            case 'resources': {
+                const toBeUpdatedProcs = [...processes]
+                const toBeUpdatedRes = [...resources]
+                const diffs = Array.from({ length: diff }, () => 0)
+
+                for (const [i, { allocations, needs }] of processes.entries()) {
+                    if (diff >= 0) {
+                        toBeUpdatedProcs[i].allocations = [...allocations, ...diffs]
+                        toBeUpdatedProcs[i].needs = [...needs, ...diffs]
+                    } else {
+                        toBeUpdatedProcs[i].allocations = allocations.slice(0, parseInt(element.value))
+                        toBeUpdatedProcs[i].needs = needs.slice(0, parseInt(element.value))
+                    }
+                }
+
+                if (diff >= 0) {
+                    toBeUpdatedRes.push(...diffs)
+                } else {
+                    const index = parseInt(element.value)
+                    toBeUpdatedRes.splice(index, toBeUpdatedRes.length - index + 1)
+                }
+
+                setProcesses(toBeUpdatedProcs)
+                setResources(toBeUpdatedRes)
+                break
+            }
+
+        }
+
+        preValues.set(element, element.value)
+    }
 
     return (
         <>
@@ -54,21 +119,25 @@ function App() {
                                 type='number'
                                 min='0'
                                 max='99'
+                                id='processes'
                                 className='hidden-input'
                                 defaultValue={processes.length}
-                                onFocus={onFocusSelected}
+                                onFocus={onInputFocus}
+                                onChange={onInputChange}
                             >
                             </input></td>
                             <td><input
                                 type='number'
                                 min='0'
-                                max='99'
+                                max='5'
+                                id='resources'
                                 className='hidden-input'
                                 defaultValue={resources.length}
-                                onFocus={onFocusSelected}
+                                onFocus={onInputFocus}
+                                onChange={onInputChange}
                             >
                             </input></td>
-                            <td className='flex-around'>{toFlexAround(resources)}</td>
+                            <td className='flex-around'>{toFlexAround(InputGroupType.Available, 0, resources)}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -84,8 +153,8 @@ function App() {
                             processes.map(({ name, allocations, needs, isFinish }, index) => (
                                 <tr key={index}>
                                     <td><input className='hidden-input' defaultValue={name}></input></td>
-                                    <td className='flex-around'>{toFlexAround(allocations)}</td>
-                                    <td className='flex-around'>{toFlexAround(needs)}</td>
+                                    <td className='flex-around'>{toFlexAround(InputGroupType.Allocation, index, allocations)}</td>
+                                    <td className='flex-around'>{toFlexAround(InputGroupType.Need, index, needs)}</td>
                                     <td
                                         style={{ color: isFinish ? 'red' : 'green' }}
                                     >{isFinish ? '已完成' : '运行中'}</td>
@@ -110,7 +179,7 @@ function App() {
                                 min='0'
                                 max='99'
                                 defaultValue='0'
-                                onFocus={onFocusSelected}
+                                onFocus={onInputFocus}
                             ></input>
                         ))}
                         <button>申请资源</button>

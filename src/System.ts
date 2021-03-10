@@ -1,6 +1,6 @@
 // 算法参考：https://www.cnblogs.com/chuxiuhong/p/6103928.html
 
-interface Process {
+export interface Process {
     /**
      * 进程名
      */

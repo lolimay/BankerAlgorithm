@@ -30344,6 +30344,31 @@ var __read = this && this.__read || function (o, n) {
   return ar;
 };
 
+var __spreadArray = this && this.__spreadArray || function (to, from) {
+  for (var i = 0, il = from.length, j = to.length; i < il; i++, j++) {
+    to[j] = from[i];
+  }
+
+  return to;
+};
+
+var __values = this && this.__values || function (o) {
+  var s = typeof Symbol === "function" && Symbol.iterator,
+      m = s && o[s],
+      i = 0;
+  if (m) return m.call(o);
+  if (o && typeof o.length === "number") return {
+    next: function next() {
+      if (o && i >= o.length) o = void 0;
+      return {
+        value: o && o[i++],
+        done: !o
+      };
+    }
+  };
+  throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+};
+
 var __importDefault = this && this.__importDefault || function (mod) {
   return mod && mod.__esModule ? mod : {
     "default": mod
@@ -30389,6 +30414,13 @@ var defaultProcesses = [{
   needs: [1, 1, 0],
   isFinish: false
 }];
+var InputGroupType;
+
+(function (InputGroupType) {
+  InputGroupType[InputGroupType["Available"] = 0] = "Available";
+  InputGroupType[InputGroupType["Allocation"] = 1] = "Allocation";
+  InputGroupType[InputGroupType["Need"] = 2] = "Need";
+})(InputGroupType || (InputGroupType = {}));
 
 function App() {
   var _a = __read(react_1.useState(defaultResources), 2),
@@ -30399,11 +30431,11 @@ function App() {
       processes = _b[0],
       setProcesses = _b[1];
 
-  var _c = __read(react_1.useState({}), 2),
+  var _c = __read(react_1.useState(new Map()), 2),
       preValues = _c[0],
       setPreValues = _c[1];
 
-  var toFlexAround = function toFlexAround(arr) {
+  var toFlexAround = function toFlexAround(type, row, arr) {
     return arr.map(function (num, index) {
       return react_1.default.createElement("input", {
         type: 'number',
@@ -30411,8 +30443,10 @@ function App() {
         max: '99',
         className: 'hidden-input',
         defaultValue: num,
-        onFocus: onFocusSelected,
-        key: index
+        id: type + "-" + row + "-" + index,
+        key: index,
+        onFocus: onInputFocus,
+        onChange: onInputChange
       });
     });
   };
@@ -30421,8 +30455,106 @@ function App() {
     System_1.System.setProcesses(processes).setAvailableResources(resources);
   }, [resources, processes]);
 
-  var onFocusSelected = function onFocusSelected(ev) {
-    return ev.target.select();
+  var createEmptyProcess = function createEmptyProcess(index, resourceCategories) {
+    return {
+      name: "P" + index,
+      allocations: Array.from({
+        length: resourceCategories
+      }, function () {
+        return 0;
+      }),
+      needs: Array.from({
+        length: resourceCategories
+      }, function () {
+        return 0;
+      }),
+      isFinish: false
+    };
+  };
+
+  var onInputFocus = function onInputFocus(ev) {
+    var element = ev.target;
+    element.select();
+    preValues.set(element, element.value);
+  };
+
+  var onInputChange = function onInputChange(ev) {
+    var e_1, _a;
+
+    var element = ev.target;
+    var diff = element.value - preValues.get(element);
+
+    switch (element.id) {
+      case 'processes':
+        {
+          if (diff >= 0) {
+            var diffs = Array.from({
+              length: diff
+            }, function () {
+              return createEmptyProcess(parseInt(element.value), resources.length);
+            });
+            setProcesses(__spreadArray(__spreadArray([], __read(processes)), __read(diffs)));
+          } else {
+            setProcesses(processes.slice(0, parseInt(element.value)));
+          }
+
+          break;
+        }
+
+      case 'resources':
+        {
+          var toBeUpdatedProcs = __spreadArray([], __read(processes));
+
+          var toBeUpdatedRes = __spreadArray([], __read(resources));
+
+          var diffs = Array.from({
+            length: diff
+          }, function () {
+            return 0;
+          });
+
+          try {
+            for (var _b = __values(processes.entries()), _c = _b.next(); !_c.done; _c = _b.next()) {
+              var _d = __read(_c.value, 2),
+                  i = _d[0],
+                  _e = _d[1],
+                  allocations = _e.allocations,
+                  needs = _e.needs;
+
+              if (diff >= 0) {
+                toBeUpdatedProcs[i].allocations = __spreadArray(__spreadArray([], __read(allocations)), __read(diffs));
+                toBeUpdatedProcs[i].needs = __spreadArray(__spreadArray([], __read(needs)), __read(diffs));
+              } else {
+                toBeUpdatedProcs[i].allocations = allocations.slice(0, parseInt(element.value));
+                toBeUpdatedProcs[i].needs = needs.slice(0, parseInt(element.value));
+              }
+            }
+          } catch (e_1_1) {
+            e_1 = {
+              error: e_1_1
+            };
+          } finally {
+            try {
+              if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            } finally {
+              if (e_1) throw e_1.error;
+            }
+          }
+
+          if (diff >= 0) {
+            toBeUpdatedRes.push.apply(toBeUpdatedRes, __spreadArray([], __read(diffs)));
+          } else {
+            var index = parseInt(element.value);
+            toBeUpdatedRes.splice(index, toBeUpdatedRes.length - index + 1);
+          }
+
+          setProcesses(toBeUpdatedProcs);
+          setResources(toBeUpdatedRes);
+          break;
+        }
+    }
+
+    preValues.set(element, element.value);
   };
 
   return react_1.default.createElement(react_1.default.Fragment, null, react_1.default.createElement("div", {
@@ -30433,19 +30565,23 @@ function App() {
     type: 'number',
     min: '0',
     max: '99',
+    id: 'processes',
     className: 'hidden-input',
     defaultValue: processes.length,
-    onFocus: onFocusSelected
+    onFocus: onInputFocus,
+    onChange: onInputChange
   })), react_1.default.createElement("td", null, react_1.default.createElement("input", {
     type: 'number',
     min: '0',
-    max: '99',
+    max: '5',
+    id: 'resources',
     className: 'hidden-input',
     defaultValue: resources.length,
-    onFocus: onFocusSelected
+    onFocus: onInputFocus,
+    onChange: onInputChange
   })), react_1.default.createElement("td", {
     className: 'flex-around'
-  }, toFlexAround(resources))))), react_1.default.createElement("table", null, react_1.default.createElement("tbody", null, react_1.default.createElement("tr", null, react_1.default.createElement("td", null, "\u8FDB\u7A0B\u540D (Process)"), react_1.default.createElement("td", null, "\u5DF2\u5206\u914D\u8D44\u6E90\u6570 (Allocation)"), react_1.default.createElement("td", null, "\u4ECD\u9700\u8981\u8D44\u6E90\u6570 (Need)"), react_1.default.createElement("td", null, "\u8FDB\u7A0B\u72B6\u6001 (Finish)")), processes.map(function (_a, index) {
+  }, toFlexAround(InputGroupType.Available, 0, resources))))), react_1.default.createElement("table", null, react_1.default.createElement("tbody", null, react_1.default.createElement("tr", null, react_1.default.createElement("td", null, "\u8FDB\u7A0B\u540D (Process)"), react_1.default.createElement("td", null, "\u5DF2\u5206\u914D\u8D44\u6E90\u6570 (Allocation)"), react_1.default.createElement("td", null, "\u4ECD\u9700\u8981\u8D44\u6E90\u6570 (Need)"), react_1.default.createElement("td", null, "\u8FDB\u7A0B\u72B6\u6001 (Finish)")), processes.map(function (_a, index) {
     var name = _a.name,
         allocations = _a.allocations,
         needs = _a.needs,
@@ -30457,9 +30593,9 @@ function App() {
       defaultValue: name
     })), react_1.default.createElement("td", {
       className: 'flex-around'
-    }, toFlexAround(allocations)), react_1.default.createElement("td", {
+    }, toFlexAround(InputGroupType.Allocation, index, allocations)), react_1.default.createElement("td", {
       className: 'flex-around'
-    }, toFlexAround(needs)), react_1.default.createElement("td", {
+    }, toFlexAround(InputGroupType.Need, index, needs)), react_1.default.createElement("td", {
       style: {
         color: isFinish ? 'red' : 'green'
       }
@@ -30482,7 +30618,7 @@ function App() {
       min: '0',
       max: '99',
       defaultValue: '0',
-      onFocus: onFocusSelected
+      onFocus: onInputFocus
     });
   }), react_1.default.createElement("button", null, "\u7533\u8BF7\u8D44\u6E90")))));
 }
