@@ -1,5 +1,7 @@
 // 算法参考：https://www.cnblogs.com/chuxiuhong/p/6103928.html
 
+import { clone } from './util'
+
 export interface Process {
     /**
      * 进程名
@@ -26,6 +28,7 @@ export enum SystemEventType {
     PROCESS_FINISH,
     SEQ_FOUND,
     SEQ_NOT_FOUND,
+    CHECK_SAFETY_END,
     EXIT
 }
 
@@ -52,6 +55,7 @@ export interface SystemEventPayload {
     [SystemEventType.PROCESS_FINISH]: number
     [SystemEventType.SEQ_FOUND]: string
     [SystemEventType.SEQ_NOT_FOUND]: void
+    [SystemEventType.CHECK_SAFETY_END]: void
 }
 
 export interface SystemEvent<K extends keyof SystemEventPayload> {
@@ -83,12 +87,12 @@ export const System = new class {
     }
 
     public setProcesses(processes: Process[]) {
-        this._processes = this.clone(processes)
+        this._processes = clone(processes)
         return this
     }
 
     public setAvailableResources(resources: number[]) {
-        this._availableResources = this.clone(resources)
+        this._availableResources = clone(resources)
         return this
     }
 
@@ -163,6 +167,7 @@ export const System = new class {
             this.emit(SystemEventType.SEQ_NOT_FOUND)
         }
 
+        this.emit(SystemEventType.CHECK_SAFETY_END)
         return isSafe
     }
 
@@ -221,9 +226,5 @@ export const System = new class {
             })
             return false
         }
-    }
-
-    private clone(source: object) {
-        return JSON.parse(JSON.stringify(source))
     }
 }

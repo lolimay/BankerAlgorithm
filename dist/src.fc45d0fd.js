@@ -29772,7 +29772,20 @@ if ("development" === 'production') {
 } else {
   module.exports = require('./cjs/react-dom.development.js');
 }
-},{"./cjs/react-dom.development.js":"node_modules/react-dom/cjs/react-dom.development.js"}],"../../../../.nvm/versions/node/v12.13.0/lib/node_modules/parcel-bundler/node_modules/process/browser.js":[function(require,module,exports) {
+},{"./cjs/react-dom.development.js":"node_modules/react-dom/cjs/react-dom.development.js"}],"src/util.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.clone = void 0;
+
+var clone = function clone(source) {
+  return JSON.parse(JSON.stringify(source));
+};
+
+exports.clone = clone;
+},{}],"../../../../.nvm/versions/node/v12.13.0/lib/node_modules/parcel-bundler/node_modules/process/browser.js":[function(require,module,exports) {
 
 // shim for using process in browser
 var process = module.exports = {}; // cached from whatever global is present so that test runners that stub it
@@ -30057,6 +30070,9 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.System = exports.SystemEventType = void 0;
+
+var util_1 = require("./util");
+
 var SystemEventType;
 
 (function (SystemEventType) {
@@ -30065,7 +30081,8 @@ var SystemEventType;
   SystemEventType[SystemEventType["PROCESS_FINISH"] = 2] = "PROCESS_FINISH";
   SystemEventType[SystemEventType["SEQ_FOUND"] = 3] = "SEQ_FOUND";
   SystemEventType[SystemEventType["SEQ_NOT_FOUND"] = 4] = "SEQ_NOT_FOUND";
-  SystemEventType[SystemEventType["EXIT"] = 5] = "EXIT";
+  SystemEventType[SystemEventType["CHECK_SAFETY_END"] = 5] = "CHECK_SAFETY_END";
+  SystemEventType[SystemEventType["EXIT"] = 6] = "EXIT";
 })(SystemEventType = exports.SystemEventType || (exports.SystemEventType = {}));
 
 exports.System = new (
@@ -30103,12 +30120,12 @@ function () {
   });
 
   class_1.prototype.setProcesses = function (processes) {
-    this._processes = this.clone(processes);
+    this._processes = util_1.clone(processes);
     return this;
   };
 
   class_1.prototype.setAvailableResources = function (resources) {
-    this._availableResources = this.clone(resources);
+    this._availableResources = util_1.clone(resources);
     return this;
   };
 
@@ -30232,6 +30249,7 @@ function () {
       this.emit(SystemEventType.SEQ_NOT_FOUND);
     }
 
+    this.emit(SystemEventType.CHECK_SAFETY_END);
     return isSafe;
   };
 
@@ -30282,13 +30300,9 @@ function () {
     }
   };
 
-  class_1.prototype.clone = function (source) {
-    return JSON.parse(JSON.stringify(source));
-  };
-
   return class_1;
 }())();
-},{"process":"../../../../.nvm/versions/node/v12.13.0/lib/node_modules/parcel-bundler/node_modules/process/browser.js"}],"../../../../.nvm/versions/node/v12.13.0/lib/node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
+},{"./util":"src/util.ts","process":"../../../../.nvm/versions/node/v12.13.0/lib/node_modules/parcel-bundler/node_modules/process/browser.js"}],"../../../../.nvm/versions/node/v12.13.0/lib/node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
 var bundleURL = null;
 
 function getBundleURLCached() {
@@ -30611,6 +30625,8 @@ var System_1 = require("./System");
 
 require("./index.scss");
 
+var util_1 = require("./util");
+
 var getFormattedTime = function getFormattedTime() {
   return new Date().toLocaleString('zh-Hans-CN', {
     hour12: false
@@ -30691,6 +30707,8 @@ function App() {
       logs = _f[0],
       setLogs = _f[1];
 
+  var backup = react_1.useRef({});
+
   var toFlexAround = function toFlexAround(type, row, arr) {
     var shouldHighlight = function shouldHighlight(row, index, num) {
       if (type === InputGroupType.Need && (workInfo === null || workInfo === void 0 ? void 0 : workInfo.id) === row) {
@@ -30734,6 +30752,10 @@ function App() {
         switch (_d.label) {
           case 0:
             toBeUpdatedLogs = __spreadArray([], __read(logs));
+            Object.assign(backup.current, {
+              resources: util_1.clone(resources),
+              processes: util_1.clone(processes)
+            });
             setReadOnly(true);
             toBeUpdatedLogs.push({
               level: LogLevel.Info,
@@ -30787,6 +30809,15 @@ function App() {
                     content: "\u672A\u627E\u5230\u5B89\u5168\u5E8F\u5217\uFF0C\u5F53\u524D\u65F6\u523B\u7CFB\u7EDF\u4E0D\u5B89\u5168\uFF01"
                   }]);
                   setLogs(logs_2);
+                  break;
+                }
+
+              case System_1.SystemEventType.CHECK_SAFETY_END:
+                {
+                  setProcesses(backup.current.processes);
+                  setResources(backup.current.resources);
+                  setWorkInfo({});
+                  setReadOnly(false);
                   break;
                 }
             }
@@ -31089,7 +31120,7 @@ function App() {
 }
 
 react_dom_1.default.render(react_1.default.createElement(App, null), document.getElementById('root'));
-},{"react-dom":"node_modules/react-dom/index.js","react":"node_modules/react/index.js","./System":"src/System.ts","./index.scss":"src/index.scss"}],"../../../../.nvm/versions/node/v12.13.0/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"react-dom":"node_modules/react-dom/index.js","react":"node_modules/react/index.js","./System":"src/System.ts","./index.scss":"src/index.scss","./util":"src/util.ts"}],"../../../../.nvm/versions/node/v12.13.0/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;

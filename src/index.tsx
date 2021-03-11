@@ -1,8 +1,9 @@
 import ReactDOM from 'react-dom'
-import React, { useState, useEffect } from 'react'
-import { Process, System, SystemEventPayload, SystemEventType } from './System'
+import React, { useState, useEffect, useRef } from 'react'
+import { Process, System, SystemEventType } from './System'
 
 import './index.scss'
+import { clone } from './util'
 
 export const getFormattedTime = () => {
     return new Date().toLocaleString('zh-Hans-CN', { hour12: false })
@@ -41,6 +42,7 @@ function App() {
     const [readOnly, setReadOnly] = useState(false)
     const [workInfo, setWorkInfo] = useState({})
     const [logs, setLogs] = useState([{ level: LogLevel.Info, content: '点击按钮开始进行安全性检查' } as Log])
+    const backup = useRef({})
 
     const toFlexAround = (type: InputGroupType, row: number, arr: number[]) => {
         const shouldHighlight = (row: number, index: number, num: number): string => {
@@ -77,6 +79,10 @@ function App() {
     const checkSystemSafety = async () => {
         const toBeUpdatedLogs = [...logs]
 
+        Object.assign(backup.current, {
+            resources: clone(resources),
+            processes: clone(processes)
+        })
         setReadOnly(true)
         toBeUpdatedLogs.push({ level: LogLevel.Info, content: '开始检查系统安全性...' })
         setLogs(toBeUpdatedLogs)
@@ -109,6 +115,13 @@ function App() {
                         content: `未找到安全序列，当前时刻系统不安全！`
                     }]
                     setLogs(logs)
+                    break
+                }
+                case SystemEventType.CHECK_SAFETY_END: {
+                    setProcesses(backup.current.processes)
+                    setResources(backup.current.resources)
+                    setWorkInfo({})
+                    setReadOnly(false)
                     break
                 }
             }
