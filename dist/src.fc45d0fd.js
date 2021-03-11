@@ -30087,7 +30087,10 @@ var SystemEventType;
   SystemEventType[SystemEventType["SEQ_NOT_FOUND"] = 4] = "SEQ_NOT_FOUND";
   SystemEventType[SystemEventType["CHECK_SAFETY_END"] = 5] = "CHECK_SAFETY_END";
   SystemEventType[SystemEventType["ASSIGN_RESOURCES_START"] = 6] = "ASSIGN_RESOURCES_START";
-  SystemEventType[SystemEventType["ASSIGN_RESOURCES_END"] = 7] = "ASSIGN_RESOURCES_END";
+  SystemEventType[SystemEventType["ASSIGN_RESOURCES_MEET_NEEDS"] = 7] = "ASSIGN_RESOURCES_MEET_NEEDS";
+  SystemEventType[SystemEventType["ASSIGN_RESOURCES_MEET_SYSTEM"] = 8] = "ASSIGN_RESOURCES_MEET_SYSTEM";
+  SystemEventType[SystemEventType["PRE_ASSIGN_RESOURCES"] = 9] = "PRE_ASSIGN_RESOURCES";
+  SystemEventType[SystemEventType["ASSIGN_RESOURCES_END"] = 10] = "ASSIGN_RESOURCES_END";
 })(SystemEventType = exports.SystemEventType || (exports.SystemEventType = {}));
 
 exports.System = new (
@@ -30137,17 +30140,33 @@ function () {
     enumerable: false,
     configurable: true
   });
+  Object.defineProperty(class_1.prototype, "processes", {
+    get: function get() {
+      return util_1.clone(this._processes);
+    },
+    enumerable: false,
+    configurable: true
+  });
+  Object.defineProperty(class_1.prototype, "resources", {
+    get: function get() {
+      return util_1.clone(this._availableResources);
+    },
+    enumerable: false,
+    configurable: true
+  });
+
+  class_1.prototype.clearEvents = function () {
+    this._events = [];
+    return this;
+  };
   /**
    * 系统事件生命周期函数，通过 hook 系统事件来更新 UI
    *
    * 当发生系统事件时会被调用
    */
 
-  class_1.prototype.emit = function (type, payload) {
-    if (type === SystemEventType.ASSIGN_RESOURCES_END) {
-      return this._events = [];
-    }
 
+  class_1.prototype.emit = function (type, payload) {
     return this._events.push({
       type: type,
       payload: payload
@@ -30258,12 +30277,20 @@ function () {
     var _this = this;
 
     var process = this._processes[id];
+    var pid = id;
 
     if (typeof id === 'string') {
+      this.emit(SystemEventType.ASSIGN_RESOURCES_START, id);
       process = this._processes.find(function (_a) {
         var name = _a.name;
         return name === id;
       });
+      pid = this._processes.findIndex(function (_a) {
+        var name = _a.name;
+        return name === id;
+      });
+    } else {
+      this.emit(SystemEventType.ASSIGN_RESOURCES_START, this._processes[id].name);
     } // 如果申请的资源大于该进程需要的资源，则申请失败
     // (规则：进程实际申请的资源不能大于其需要的资源)
 
@@ -30271,17 +30298,28 @@ function () {
     if (requests.some(function (request, i) {
       return request > process.needs[i];
     })) {
+      this.emit(SystemEventType.ASSIGN_RESOURCES_MEET_NEEDS, false);
+      this.emit(SystemEventType.ASSIGN_RESOURCES_END);
       return false;
+    } else {
+      this.emit(SystemEventType.ASSIGN_RESOURCES_MEET_NEEDS, true);
     } // 如果申请的资源大于系统剩余可用的资源，则申请失败
 
 
     if (requests.some(function (requests, i) {
       return requests > _this._availableResources[i];
     })) {
+      this.emit(SystemEventType.ASSIGN_RESOURCES_MEET_SYSTEM, false);
       return false;
-    } // 尝试分配资源
+    } else {
+      this.emit(SystemEventType.ASSIGN_RESOURCES_MEET_SYSTEM, true);
+    } // 尝试预分配资源
 
 
+    this.emit(SystemEventType.PRE_ASSIGN_RESOURCES, {
+      id: pid,
+      requests: util_1.clone(requests)
+    });
     requests.forEach(function (request, i) {
       _this._availableResources[i] -= request;
       process.allocations[i] += request;
@@ -30582,6 +30620,14 @@ var __read = this && this.__read || function (o, n) {
   return ar;
 };
 
+var __spreadArray = this && this.__spreadArray || function (to, from) {
+  for (var i = 0, il = from.length, j = to.length; i < il; i++, j++) {
+    to[j] = from[i];
+  }
+
+  return to;
+};
+
 var __values = this && this.__values || function (o) {
   var s = typeof Symbol === "function" && Symbol.iterator,
       m = s && o[s],
@@ -30597,14 +30643,6 @@ var __values = this && this.__values || function (o) {
     }
   };
   throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
-};
-
-var __spreadArray = this && this.__spreadArray || function (to, from) {
-  for (var i = 0, il = from.length, j = to.length; i < il; i++, j++) {
-    to[j] = from[i];
-  }
-
-  return to;
 };
 
 var __importDefault = this && this.__importDefault || function (mod) {
@@ -30673,9 +30711,10 @@ var InputGroupType;
 var LogLevel;
 
 (function (LogLevel) {
-  LogLevel["Error"] = "red";
+  LogLevel["Error"] = "#eb4129";
   LogLevel["Warn"] = "yellow";
   LogLevel["Info"] = "white";
+  LogLevel["Success"] = "#abe047";
 })(LogLevel || (LogLevel = {}));
 
 function App() {
@@ -30709,6 +30748,7 @@ function App() {
       setLogs = _f[1];
 
   var backup = react_1.useRef({});
+  var resourcesInputs = react_1.useRef();
 
   var toFlexAround = function toFlexAround(type, row, arr) {
     var shouldHighlight = function shouldHighlight(row, index, num) {
@@ -30745,101 +30785,199 @@ function App() {
 
   var handleSystemEvents = function handleSystemEvents(toBeUpdatedLogs) {
     return __awaiter(_this, void 0, void 0, function () {
-      var _a, _b, event, toBeUpdatedProcs, logs_1, logs_2, e_1_1;
+      var _loop_1, _a, _b, event, e_1_1;
 
       var e_1, _c;
 
       return __generator(this, function (_d) {
         switch (_d.label) {
           case 0:
-            _d.trys.push([0, 5, 6, 7]);
+            _loop_1 = function _loop_1(event) {
+              var toBeUpdatedProcs, log, logs_1, log, logs_2, logs_3, _e, requests, id_1, toBeUpdatedProcs_1, toBeUpdatedRes_1;
 
-            _a = __values(System_1.System.events), _b = _a.next();
+              return __generator(this, function (_f) {
+                switch (_f.label) {
+                  case 0:
+                    console.log(event);
+
+                    switch (event.type) {
+                      case System_1.SystemEventType.MOVE_WORKVEC:
+                        {
+                          setWorkInfo(event.payload);
+                          break;
+                        }
+
+                      case System_1.SystemEventType.PROCESS_FINISH:
+                        {
+                          toBeUpdatedProcs = __spreadArray([], __read(processes));
+                          toBeUpdatedProcs[event.payload].isFinish = true;
+                          setProcesses(toBeUpdatedProcs);
+                          break;
+                        }
+
+                      case System_1.SystemEventType.SEQ_FOUND:
+                        {
+                          toBeUpdatedLogs.push({
+                            level: LogLevel.Warn,
+                            content: "\u627E\u5230\u5B89\u5168\u5E8F\u5217\uFF1A " + event.payload + "\uFF0C\u5F53\u524D\u65F6\u523B\u7CFB\u7EDF\u5B89\u5168\uFF01"
+                          });
+                          setLogs(toBeUpdatedLogs);
+                          break;
+                        }
+
+                      case System_1.SystemEventType.SEQ_NOT_FOUND:
+                        {
+                          toBeUpdatedLogs.push({
+                            level: LogLevel.Error,
+                            content: "\u672A\u627E\u5230\u5B89\u5168\u5E8F\u5217\uFF0C\u5F53\u524D\u65F6\u523B\u7CFB\u7EDF\u4E0D\u5B89\u5168\uFF01"
+                          });
+                          setLogs(toBeUpdatedLogs);
+                          break;
+                        }
+
+                      case System_1.SystemEventType.CHECK_SAFETY_END:
+                        {
+                          setProcesses(backup.current.processes);
+                          setResources(backup.current.resources);
+                          setWorkInfo({});
+                          setReadOnly(false);
+                          break;
+                        }
+
+                      case System_1.SystemEventType.ASSIGN_RESOURCES_START:
+                        {
+                          toBeUpdatedLogs.push({
+                            level: LogLevel.Info,
+                            content: "\u5F00\u59CB\u5C1D\u8BD5\u4E3A\u8FDB\u7A0B " + event.payload + " \u5206\u914D\u7CFB\u7EDF\u8D44\u6E90..."
+                          });
+                          setLogs(toBeUpdatedLogs);
+                          break;
+                        }
+
+                      case System_1.SystemEventType.ASSIGN_RESOURCES_MEET_NEEDS:
+                        {
+                          log = {
+                            level: LogLevel.Success,
+                            content: '待申请的资源满足该进程实际需要✓'
+                          };
+
+                          if (!event.payload) {
+                            logs_1 = __spreadArray(__spreadArray([], __read(toBeUpdatedLogs)), [{
+                              level: LogLevel.Error,
+                              content: '待申请的资源大于该进程实际需要，资源分配失败！'
+                            }]);
+                            setLogs(logs_1);
+                            break;
+                          }
+
+                          toBeUpdatedLogs.push(log);
+                          setLogs(toBeUpdatedLogs);
+                          break;
+                        }
+
+                      case System_1.SystemEventType.ASSIGN_RESOURCES_MEET_SYSTEM:
+                        {
+                          log = {
+                            level: LogLevel.Success,
+                            content: '系统当前剩余资源满足此次申请✓'
+                          };
+
+                          if (!event.payload) {
+                            logs_2 = __spreadArray(__spreadArray([], __read(toBeUpdatedLogs)), [{
+                              level: LogLevel.Error,
+                              content: '系统当前剩余资源不满足此次申请，资源分配失败！'
+                            }]);
+                            setLogs(logs_2);
+                            break;
+                          }
+
+                          toBeUpdatedLogs.push(log);
+                          setLogs(toBeUpdatedLogs);
+                          break;
+                        }
+
+                      case System_1.SystemEventType.PRE_ASSIGN_RESOURCES:
+                        {
+                          logs_3 = __spreadArray(__spreadArray([], __read(toBeUpdatedLogs)), [{
+                            level: LogLevel.Info,
+                            content: '尝试分配资源并调用系统安全性算法检测系统安全性...'
+                          }]);
+                          setLogs(logs_3);
+                          _e = event.payload, requests = _e.requests, id_1 = _e.id;
+                          toBeUpdatedProcs_1 = util_1.clone(processes);
+                          toBeUpdatedRes_1 = util_1.clone(resources);
+                          console.log(requests, id_1);
+                          requests.forEach(function (request, i) {
+                            toBeUpdatedRes_1[i] -= request;
+                            toBeUpdatedProcs_1[id_1].allocations[i] += request;
+                            toBeUpdatedProcs_1[id_1].needs[i] -= request;
+                          });
+                          console.log(toBeUpdatedProcs_1, toBeUpdatedRes_1);
+                          setProcesses(toBeUpdatedProcs_1);
+                          setResources(toBeUpdatedRes_1);
+                          break;
+                        }
+                    }
+
+                    return [4
+                    /*yield*/
+                    , new Promise(function (resume) {
+                      return setTimeout(resume, 2000);
+                    })];
+
+                  case 1:
+                    _f.sent();
+
+                    return [2
+                    /*return*/
+                    ];
+                }
+              });
+            };
+
             _d.label = 1;
 
           case 1:
-            if (!!_b.done) return [3
-            /*break*/
-            , 4];
-            event = _b.value;
+            _d.trys.push([1, 6, 7, 8]);
 
-            switch (event.type) {
-              case System_1.SystemEventType.MOVE_WORKVEC:
-                {
-                  setWorkInfo(event.payload);
-                  break;
-                }
-
-              case System_1.SystemEventType.PROCESS_FINISH:
-                {
-                  toBeUpdatedProcs = __spreadArray([], __read(processes));
-                  toBeUpdatedProcs[event.payload].isFinish = true;
-                  setProcesses(toBeUpdatedProcs);
-                  break;
-                }
-
-              case System_1.SystemEventType.SEQ_FOUND:
-                {
-                  logs_1 = __spreadArray(__spreadArray([], __read(toBeUpdatedLogs)), [{
-                    level: LogLevel.Warn,
-                    content: "\u627E\u5230\u5B89\u5168\u5E8F\u5217\uFF1A " + event.payload + "\uFF0C\u5F53\u524D\u65F6\u523B\u7CFB\u7EDF\u5B89\u5168\uFF01"
-                  }]);
-                  setLogs(logs_1);
-                  break;
-                }
-
-              case System_1.SystemEventType.SEQ_NOT_FOUND:
-                {
-                  logs_2 = __spreadArray(__spreadArray([], __read(toBeUpdatedLogs)), [{
-                    level: LogLevel.Error,
-                    content: "\u672A\u627E\u5230\u5B89\u5168\u5E8F\u5217\uFF0C\u5F53\u524D\u65F6\u523B\u7CFB\u7EDF\u4E0D\u5B89\u5168\uFF01"
-                  }]);
-                  setLogs(logs_2);
-                  break;
-                }
-
-              case System_1.SystemEventType.CHECK_SAFETY_END:
-                {
-                  setProcesses(backup.current.processes);
-                  setResources(backup.current.resources);
-                  setWorkInfo({});
-                  setReadOnly(false);
-                  break;
-                }
-            }
-
-            return [4
-            /*yield*/
-            , new Promise(function (resume) {
-              return setTimeout(resume, 2000);
-            })];
+            _a = __values(System_1.System.events), _b = _a.next();
+            _d.label = 2;
 
           case 2:
-            _d.sent();
-
-            _d.label = 3;
+            if (!!_b.done) return [3
+            /*break*/
+            , 5];
+            event = _b.value;
+            return [5
+            /*yield**/
+            , _loop_1(event)];
 
           case 3:
+            _d.sent();
+
+            _d.label = 4;
+
+          case 4:
             _b = _a.next();
             return [3
             /*break*/
-            , 1];
-
-          case 4:
-            return [3
-            /*break*/
-            , 7];
+            , 2];
 
           case 5:
+            return [3
+            /*break*/
+            , 8];
+
+          case 6:
             e_1_1 = _d.sent();
             e_1 = {
               error: e_1_1
             };
             return [3
             /*break*/
-            , 7];
+            , 8];
 
-          case 6:
+          case 7:
             try {
               if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
             } finally {
@@ -30850,13 +30988,21 @@ function App() {
             /*endfinally*/
             ];
 
-          case 7:
+          case 8:
             return [2
             /*return*/
             ];
         }
       });
     });
+  };
+
+  var performBackup = function performBackup() {
+    Object.assign(backup.current, {
+      resources: util_1.clone(resources),
+      processes: util_1.clone(processes)
+    });
+    return setReadOnly(true);
   };
 
   var checkSystemSafety = function checkSystemSafety() {
@@ -30866,17 +31012,43 @@ function App() {
         switch (_a.label) {
           case 0:
             toBeUpdatedLogs = __spreadArray([], __read(logs));
-            Object.assign(backup.current, {
-              resources: util_1.clone(resources),
-              processes: util_1.clone(processes)
-            });
-            setReadOnly(true);
+            performBackup();
             toBeUpdatedLogs.push({
               level: LogLevel.Info,
               content: '开始检查系统安全性...'
             });
             setLogs(toBeUpdatedLogs);
-            System_1.System.isSafe();
+            System_1.System.clearEvents().isSafe();
+            return [4
+            /*yield*/
+            , handleSystemEvents(toBeUpdatedLogs)];
+
+          case 1:
+            _a.sent();
+
+            return [2
+            /*return*/
+            ];
+        }
+      });
+    });
+  };
+
+  var allocateResource = function allocateResource() {
+    return __awaiter(_this, void 0, void 0, function () {
+      var inputs, processName, resourcesToBeAllocated, toBeUpdatedLogs;
+      return __generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            inputs = resourcesInputs.current.querySelectorAll('input');
+            processName = resourcesInputs.current.querySelector('select').value;
+            resourcesToBeAllocated = Array.from(inputs).map(function (_a) {
+              var value = _a.value;
+              return parseInt(value);
+            });
+            toBeUpdatedLogs = __spreadArray([], __read(logs));
+            performBackup();
+            System_1.System.clearEvents().allocateResources(processName, resourcesToBeAllocated);
             return [4
             /*yield*/
             , handleSystemEvents(toBeUpdatedLogs)];
@@ -31104,7 +31276,8 @@ function App() {
     onClick: checkSystemSafety,
     disabled: readOnly
   }, "\u68C0\u67E5\u7CFB\u7EDF\u5B89\u5168\u6027")), react_1.default.createElement("div", {
-    className: 'right'
+    className: 'right',
+    ref: resourcesInputs
   }, react_1.default.createElement("span", null, "\u5C1D\u8BD5\u4E3A\u8FDB\u7A0B\u5206\u914D\u8D44\u6E90\uFF1A"), react_1.default.createElement("select", {
     disabled: readOnly
   }, processes.map(function (_a, index) {
@@ -31123,7 +31296,8 @@ function App() {
       disabled: readOnly
     });
   }), react_1.default.createElement("button", {
-    disabled: readOnly
+    disabled: readOnly,
+    onClick: allocateResource
   }, "\u7533\u8BF7\u8D44\u6E90"))), react_1.default.createElement("div", {
     className: 'logs'
   }, logs.map(function (_a, index) {

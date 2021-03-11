@@ -25,9 +25,10 @@ enum InputGroupType {
 }
 
 enum LogLevel {
-    Error = 'red',
+    Error = '#eb4129',
     Warn = 'yellow',
-    Info = 'white'
+    Info = 'white',
+    Success = '#abe047'
 }
 
 interface Log {
@@ -43,6 +44,7 @@ function App() {
     const [workInfo, setWorkInfo] = useState({})
     const [logs, setLogs] = useState([{ level: LogLevel.Info, content: '点击按钮开始进行安全性检查' } as Log])
     const backup = useRef({})
+    const resourcesInputs = useRef()
 
     const toFlexAround = (type: InputGroupType, row: number, arr: number[]) => {
         const shouldHighlight = (row: number, index: number, num: number): string => {
@@ -78,6 +80,7 @@ function App() {
 
     const handleSystemEvents = async (toBeUpdatedLogs: Log[]) => {
         for (const event of System.events) {
+            console.log(event)
             switch (event.type) {
                 case SystemEventType.MOVE_WORKVEC: {
                     setWorkInfo(event.payload)
@@ -90,19 +93,19 @@ function App() {
                     break
                 }
                 case SystemEventType.SEQ_FOUND: {
-                    const logs = [...toBeUpdatedLogs, {
+                    toBeUpdatedLogs.push({
                         level: LogLevel.Warn,
                         content: `找到安全序列： ${ event.payload }，当前时刻系统安全！`
-                    }]
-                    setLogs(logs)
+                    })
+                    setLogs(toBeUpdatedLogs)
                     break
                 }
                 case SystemEventType.SEQ_NOT_FOUND: {
-                    const logs = [...toBeUpdatedLogs, {
+                    toBeUpdatedLogs.push({
                         level: LogLevel.Error,
                         content: `未找到安全序列，当前时刻系统不安全！`
-                    }]
-                    setLogs(logs)
+                    })
+                    setLogs(toBeUpdatedLogs)
                     break
                 }
                 case SystemEventType.CHECK_SAFETY_END: {
@@ -112,23 +115,104 @@ function App() {
                     setReadOnly(false)
                     break
                 }
+                case SystemEventType.ASSIGN_RESOURCES_START: {
+                    toBeUpdatedLogs.push({
+                        level: LogLevel.Info,
+                        content: `开始尝试为进程 ${ event.payload } 分配系统资源...`
+                    })
+                    setLogs(toBeUpdatedLogs)
+                    break
+                }
+                case SystemEventType.ASSIGN_RESOURCES_MEET_NEEDS: {
+                    const log = {
+                        level: LogLevel.Success,
+                        content: '待申请的资源满足该进程实际需要✓'
+                    }
+                    if (!event.payload) {
+                        const logs = [...toBeUpdatedLogs, {
+                            level: LogLevel.Error,
+                            content: '待申请的资源大于该进程实际需要，资源分配失败！'
+                        }]
+                        setLogs(logs)
+                        break
+                    }
+                    toBeUpdatedLogs.push(log)
+                    setLogs(toBeUpdatedLogs)
+                    break
+                }
+                case SystemEventType.ASSIGN_RESOURCES_MEET_SYSTEM: {
+                    const log = {
+                        level: LogLevel.Success,
+                        content: '系统当前剩余资源满足此次申请✓'
+                    }
+                    if (!event.payload) {
+                        const logs = [...toBeUpdatedLogs, {
+                            level: LogLevel.Error,
+                            content: '系统当前剩余资源不满足此次申请，资源分配失败！'
+                        }]
+                        setLogs(logs)
+                        break
+                    }
+                    toBeUpdatedLogs.push(log)
+                    setLogs(toBeUpdatedLogs)
+                    break
+                }
+                case SystemEventType.PRE_ASSIGN_RESOURCES: {
+                    const logs = [...toBeUpdatedLogs, {
+                        level: LogLevel.Info,
+                        content: '尝试分配资源并调用系统安全性算法检测系统安全性...'
+                    }]
+                    setLogs(logs)
+                    const { requests, id } = event.payload
+                    const toBeUpdatedProcs = clone(processes)
+                    const toBeUpdatedRes = clone(resources)
+
+                    console.log(requests, id)
+                    requests.forEach((request, i) => {
+                        toBeUpdatedRes[i] -= request
+                        toBeUpdatedProcs[id].allocations[i] += request
+                        toBeUpdatedProcs[id].needs[i] -= request
+                    })
+
+                    console.log(toBeUpdatedProcs, toBeUpdatedRes)
+                    setProcesses(toBeUpdatedProcs)
+                    setResources(toBeUpdatedRes)
+                    break
+                }
             }
+
             await new Promise(resume => setTimeout(resume, 2000))
         }
+    }
+
+    const performBackup = () => {
+        Object.assign(backup.current, {
+            resources: clone(resources),
+            processes: clone(processes)
+        })
+        return setReadOnly(true)
     }
 
     const checkSystemSafety = async () => {
         const toBeUpdatedLogs = [...logs]
 
-        Object.assign(backup.current, {
-            resources: clone(resources),
-            processes: clone(processes)
-        })
-        setReadOnly(true)
+        performBackup()
         toBeUpdatedLogs.push({ level: LogLevel.Info, content: '开始检查系统安全性...' })
         setLogs(toBeUpdatedLogs)
 
-        System.isSafe()
+        System.clearEvents().isSafe()
+
+        await handleSystemEvents(toBeUpdatedLogs)
+    }
+
+    const allocateResource = async () => {
+        const inputs = resourcesInputs.current.querySelectorAll('input')
+        const processName = resourcesInputs.current.querySelector('select').value
+        const resourcesToBeAllocated = Array.from(inputs).map(({ value }) => parseInt(value))
+        const toBeUpdatedLogs = [...logs]
+
+        performBackup()
+        System.clearEvents().allocateResources(processName, resourcesToBeAllocated)
 
         await handleSystemEvents(toBeUpdatedLogs)
     }
@@ -305,7 +389,7 @@ function App() {
                     <div className='left'>
                         <button onClick={checkSystemSafety} disabled={readOnly}>检查系统安全性</button>
                     </div>
-                    <div className='right'>
+                    <div className='right' ref={resourcesInputs}>
                         <span>尝试为进程分配资源：</span>
                         <select disabled={readOnly}>
                             {processes.map(({ name }, index) => <option key={index}>{name}</option>)}
@@ -321,7 +405,7 @@ function App() {
                                 disabled={readOnly}
                             ></input>
                         ))}
-                        <button disabled={readOnly}>申请资源</button>
+                        <button disabled={readOnly} onClick={allocateResource}>申请资源</button>
                     </div>
                 </div>
                 <div className='logs'>{logs.map(({ level, content }, index) => (

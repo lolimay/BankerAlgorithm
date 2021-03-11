@@ -1,6 +1,6 @@
 // 算法参考：https://www.cnblogs.com/chuxiuhong/p/6103928.html
 
-import { clone } from './util'
+import { clone } from './util';
 
 export interface Process {
     /**
@@ -33,6 +33,9 @@ export enum SystemEventType {
     SEQ_NOT_FOUND,
     CHECK_SAFETY_END,
     ASSIGN_RESOURCES_START,
+    ASSIGN_RESOURCES_MEET_NEEDS,
+    ASSIGN_RESOURCES_MEET_SYSTEM,
+    PRE_ASSIGN_RESOURCES,
     ASSIGN_RESOURCES_END
 }
 
@@ -60,6 +63,28 @@ export interface SystemEventPayload {
     [SystemEventType.SEQ_FOUND]: string
     [SystemEventType.SEQ_NOT_FOUND]: void
     [SystemEventType.CHECK_SAFETY_END]: void
+    /**
+     * 进程名
+     */
+    [SystemEventType.ASSIGN_RESOURCES_START]: string
+    /**
+     * 是否满足进程 Need
+     */
+    [SystemEventType.ASSIGN_RESOURCES_MEET_NEEDS]: boolean
+    /**
+     * 是否满足系统剩余资源数
+     */
+    [SystemEventType.ASSIGN_RESOURCES_MEET_SYSTEM]: boolean
+    [SystemEventType.PRE_ASSIGN_RESOURCES]: {
+        /**
+         * 进程名
+         */
+        id: number
+        /**
+         * 请求资源数组
+         */
+        requests: number[]
+    }
 }
 
 export interface SystemEvent<K extends keyof SystemEventPayload> {
@@ -103,15 +128,25 @@ export const System = new class {
         return this._events
     }
 
+    public get processes(): Process[] {
+        return clone(this._processes)
+    }
+
+    public get resources(): number[] {
+        return clone(this._availableResources)
+    }
+
+    public clearEvents() {
+        this._events = []
+        return this
+    }
+
     /**
      * 系统事件生命周期函数，通过 hook 系统事件来更新 UI
      * 
      * 当发生系统事件时会被调用
      */
     public emit<K extends keyof SystemEventPayload>(type: K, payload?: SystemEventPayload[K]) {
-        if (type === SystemEventType.ASSIGN_RESOURCES_END) {
-            return this._events = []
-        }
         return this._events.push({ type, payload })
     }
 
@@ -194,23 +229,43 @@ export const System = new class {
     public allocateResources(name: string, requests: number[]): boolean;
     public allocateResources(id: number | string, requests: number[]): boolean {
         let process = this._processes[id]
+        let pid: number = id as number
 
         if (typeof id === 'string') {
+            this.emit(SystemEventType.ASSIGN_RESOURCES_START, id)
             process = this._processes.find(({ name }) => name === id)
+            pid = this._processes.findIndex(({ name }) => name === id)
+        } else {
+            this.emit(
+                SystemEventType.ASSIGN_RESOURCES_START,
+                this._processes[id].name
+            )
         }
 
         // 如果申请的资源大于该进程需要的资源，则申请失败
         // (规则：进程实际申请的资源不能大于其需要的资源)
         if (requests.some((request, i) => request > process.needs[i])) {
+            this.emit(SystemEventType.ASSIGN_RESOURCES_MEET_NEEDS, false)
+            this.emit(SystemEventType.ASSIGN_RESOURCES_END)
             return false
+        } else {
+            this.emit(SystemEventType.ASSIGN_RESOURCES_MEET_NEEDS, true)
         }
 
         // 如果申请的资源大于系统剩余可用的资源，则申请失败
         if (requests.some((requests, i) => requests > this._availableResources[i])) {
+            this.emit(SystemEventType.ASSIGN_RESOURCES_MEET_SYSTEM, false)
             return false
+        } else {
+            this.emit(SystemEventType.ASSIGN_RESOURCES_MEET_SYSTEM, true)
         }
 
-        // 尝试分配资源
+        // 尝试预分配资源
+        this.emit(SystemEventType.PRE_ASSIGN_RESOURCES, {
+            id: pid,
+            requests: clone(requests),
+        })
+
         requests.forEach((request, i) => {
             this._availableResources[i] -= request
             process.allocations[i] += request
