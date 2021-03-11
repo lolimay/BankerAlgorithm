@@ -30072,17 +30072,22 @@ Object.defineProperty(exports, "__esModule", {
 exports.System = exports.SystemEventType = void 0;
 
 var util_1 = require("./util");
+/**
+ * 系统事件类型
+ */
+
 
 var SystemEventType;
 
 (function (SystemEventType) {
-  SystemEventType[SystemEventType["INIT"] = 0] = "INIT";
+  SystemEventType[SystemEventType["CHECK_SAFETY_START"] = 0] = "CHECK_SAFETY_START";
   SystemEventType[SystemEventType["MOVE_WORKVEC"] = 1] = "MOVE_WORKVEC";
   SystemEventType[SystemEventType["PROCESS_FINISH"] = 2] = "PROCESS_FINISH";
   SystemEventType[SystemEventType["SEQ_FOUND"] = 3] = "SEQ_FOUND";
   SystemEventType[SystemEventType["SEQ_NOT_FOUND"] = 4] = "SEQ_NOT_FOUND";
   SystemEventType[SystemEventType["CHECK_SAFETY_END"] = 5] = "CHECK_SAFETY_END";
-  SystemEventType[SystemEventType["EXIT"] = 6] = "EXIT";
+  SystemEventType[SystemEventType["ASSIGN_RESOURCES_START"] = 6] = "ASSIGN_RESOURCES_START";
+  SystemEventType[SystemEventType["ASSIGN_RESOURCES_END"] = 7] = "ASSIGN_RESOURCES_END";
 })(SystemEventType = exports.SystemEventType || (exports.SystemEventType = {}));
 
 exports.System = new (
@@ -30108,16 +30113,12 @@ function () {
      */
 
     this._safeSequence = [];
+    /**
+     * 系统事件快照
+     */
+
     this._events = [];
   }
-
-  Object.defineProperty(class_1.prototype, "totalProcesses", {
-    get: function get() {
-      return this._processes.length;
-    },
-    enumerable: false,
-    configurable: true
-  });
 
   class_1.prototype.setProcesses = function (processes) {
     this._processes = util_1.clone(processes);
@@ -30143,7 +30144,7 @@ function () {
    */
 
   class_1.prototype.emit = function (type, payload) {
-    if (type === SystemEventType.EXIT) {
+    if (type === SystemEventType.ASSIGN_RESOURCES_END) {
       return this._events = [];
     }
 
@@ -30172,7 +30173,7 @@ function () {
 
     this._safeSequence = []; // 设置安全序列为空
 
-    this.emit(SystemEventType.INIT); // 不断查找可执行进程 (未完成但目前资源可满足其需要，这样的进程是能够完成的)
+    this.emit(SystemEventType.CHECK_SAFETY_START); // 不断查找可执行进程 (未完成但目前资源可满足其需要，这样的进程是能够完成的)
 
     while (true) {
       var isFound = false; // 是否在未完成的进程中找到可执行进程
@@ -30581,14 +30582,6 @@ var __read = this && this.__read || function (o, n) {
   return ar;
 };
 
-var __spreadArray = this && this.__spreadArray || function (to, from) {
-  for (var i = 0, il = from.length, j = to.length; i < il; i++, j++) {
-    to[j] = from[i];
-  }
-
-  return to;
-};
-
 var __values = this && this.__values || function (o) {
   var s = typeof Symbol === "function" && Symbol.iterator,
       m = s && o[s],
@@ -30604,6 +30597,14 @@ var __values = this && this.__values || function (o) {
     }
   };
   throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+};
+
+var __spreadArray = this && this.__spreadArray || function (to, from) {
+  for (var i = 0, il = from.length, j = to.length; i < il; i++, j++) {
+    to[j] = from[i];
+  }
+
+  return to;
 };
 
 var __importDefault = this && this.__importDefault || function (mod) {
@@ -30742,39 +30743,24 @@ function App() {
     });
   };
 
-  var checkSystemSafety = function checkSystemSafety() {
+  var handleSystemEvents = function handleSystemEvents(toBeUpdatedLogs) {
     return __awaiter(_this, void 0, void 0, function () {
-      var toBeUpdatedLogs, _a, _b, event, toBeUpdatedProcs, logs_1, logs_2, e_1_1;
+      var _a, _b, event, toBeUpdatedProcs, logs_1, logs_2, e_1_1;
 
       var e_1, _c;
 
       return __generator(this, function (_d) {
         switch (_d.label) {
           case 0:
-            toBeUpdatedLogs = __spreadArray([], __read(logs));
-            Object.assign(backup.current, {
-              resources: util_1.clone(resources),
-              processes: util_1.clone(processes)
-            });
-            setReadOnly(true);
-            toBeUpdatedLogs.push({
-              level: LogLevel.Info,
-              content: '开始检查系统安全性...'
-            });
-            setLogs(toBeUpdatedLogs);
-            System_1.System.isSafe();
+            _d.trys.push([0, 5, 6, 7]);
+
+            _a = __values(System_1.System.events), _b = _a.next();
             _d.label = 1;
 
           case 1:
-            _d.trys.push([1, 6, 7, 8]);
-
-            _a = __values(System_1.System.events), _b = _a.next();
-            _d.label = 2;
-
-          case 2:
             if (!!_b.done) return [3
             /*break*/
-            , 5];
+            , 4];
             event = _b.value;
 
             switch (event.type) {
@@ -30828,32 +30814,32 @@ function App() {
               return setTimeout(resume, 2000);
             })];
 
-          case 3:
+          case 2:
             _d.sent();
 
-            _d.label = 4;
+            _d.label = 3;
 
-          case 4:
+          case 3:
             _b = _a.next();
             return [3
             /*break*/
-            , 2];
+            , 1];
 
-          case 5:
+          case 4:
             return [3
             /*break*/
-            , 8];
+            , 7];
 
-          case 6:
+          case 5:
             e_1_1 = _d.sent();
             e_1 = {
               error: e_1_1
             };
             return [3
             /*break*/
-            , 8];
+            , 7];
 
-          case 7:
+          case 6:
             try {
               if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
             } finally {
@@ -30864,7 +30850,40 @@ function App() {
             /*endfinally*/
             ];
 
-          case 8:
+          case 7:
+            return [2
+            /*return*/
+            ];
+        }
+      });
+    });
+  };
+
+  var checkSystemSafety = function checkSystemSafety() {
+    return __awaiter(_this, void 0, void 0, function () {
+      var toBeUpdatedLogs;
+      return __generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            toBeUpdatedLogs = __spreadArray([], __read(logs));
+            Object.assign(backup.current, {
+              resources: util_1.clone(resources),
+              processes: util_1.clone(processes)
+            });
+            setReadOnly(true);
+            toBeUpdatedLogs.push({
+              level: LogLevel.Info,
+              content: '开始检查系统安全性...'
+            });
+            setLogs(toBeUpdatedLogs);
+            System_1.System.isSafe();
+            return [4
+            /*yield*/
+            , handleSystemEvents(toBeUpdatedLogs)];
+
+          case 1:
+            _a.sent();
+
             return [2
             /*return*/
             ];

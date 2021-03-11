@@ -22,19 +22,23 @@ export interface Process {
 
 }
 
+/**
+ * 系统事件类型
+ */
 export enum SystemEventType {
-    INIT,
+    CHECK_SAFETY_START,
     MOVE_WORKVEC,
     PROCESS_FINISH,
     SEQ_FOUND,
     SEQ_NOT_FOUND,
     CHECK_SAFETY_END,
-    EXIT
+    ASSIGN_RESOURCES_START,
+    ASSIGN_RESOURCES_END
 }
 
 export interface SystemEventPayload {
-    [SystemEventType.INIT]: void
-    [SystemEventType.EXIT]: void
+    [SystemEventType.CHECK_SAFETY_START]: void
+    [SystemEventType.ASSIGN_RESOURCES_END]: void
     [SystemEventType.MOVE_WORKVEC]: {
         /**
          * 进程id
@@ -80,11 +84,10 @@ export const System = new class {
      * 安全序列
      */
     private _safeSequence: number[] = []
+    /**
+     * 系统事件快照
+     */
     private _events: SystemEvent<any>[] = []
-
-    public get totalProcesses(): number {
-        return this._processes.length
-    }
 
     public setProcesses(processes: Process[]) {
         this._processes = clone(processes)
@@ -106,7 +109,7 @@ export const System = new class {
      * 当发生系统事件时会被调用
      */
     public emit<K extends keyof SystemEventPayload>(type: K, payload?: SystemEventPayload[K]) {
-        if (type === SystemEventType.EXIT) {
+        if (type === SystemEventType.ASSIGN_RESOURCES_END) {
             return this._events = []
         }
         return this._events.push({ type, payload })
@@ -120,7 +123,7 @@ export const System = new class {
         this._work = [...this._availableResources] // 动态记录当前剩余资源
         this._processes.forEach(process => process.isFinish = false) // 设定所有进程均未完成
         this._safeSequence = [] // 设置安全序列为空
-        this.emit(SystemEventType.INIT)
+        this.emit(SystemEventType.CHECK_SAFETY_START)
 
         // 不断查找可执行进程 (未完成但目前资源可满足其需要，这样的进程是能够完成的)
         while (true) {

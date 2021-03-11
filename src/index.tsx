@@ -76,19 +76,7 @@ function App() {
         ))
     }
 
-    const checkSystemSafety = async () => {
-        const toBeUpdatedLogs = [...logs]
-
-        Object.assign(backup.current, {
-            resources: clone(resources),
-            processes: clone(processes)
-        })
-        setReadOnly(true)
-        toBeUpdatedLogs.push({ level: LogLevel.Info, content: '开始检查系统安全性...' })
-        setLogs(toBeUpdatedLogs)
-
-        System.isSafe()
-
+    const handleSystemEvents = async (toBeUpdatedLogs: Log[]) => {
         for (const event of System.events) {
             switch (event.type) {
                 case SystemEventType.MOVE_WORKVEC: {
@@ -127,6 +115,22 @@ function App() {
             }
             await new Promise(resume => setTimeout(resume, 2000))
         }
+    }
+
+    const checkSystemSafety = async () => {
+        const toBeUpdatedLogs = [...logs]
+
+        Object.assign(backup.current, {
+            resources: clone(resources),
+            processes: clone(processes)
+        })
+        setReadOnly(true)
+        toBeUpdatedLogs.push({ level: LogLevel.Info, content: '开始检查系统安全性...' })
+        setLogs(toBeUpdatedLogs)
+
+        System.isSafe()
+
+        await handleSystemEvents(toBeUpdatedLogs)
     }
 
     useEffect(() => {
