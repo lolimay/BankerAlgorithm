@@ -80,6 +80,7 @@ function App() {
 
     const handleSystemEvents = async (toBeUpdatedLogs: Log[]) => {
         for (const event of System.events) {
+            console.log('event', event)
             switch (event.type) {
                 case SystemEventType.MOVE_WORKVEC: {
                     setWorkInfo(event.payload)
@@ -161,20 +162,44 @@ function App() {
                         level: LogLevel.Info,
                         content: '尝试分配资源并调用系统安全性算法检测系统安全性...'
                     }]
-                    
+                    // 清空引用
                     setProcesses(oldProcesses => {
-                        setResources(oldResources => {
-                            event.payload.requests.forEach((request, i) => {
-                                oldResources[i] -= request
-                                oldProcesses[event.payload.id].allocations[i] += request
-                                oldProcesses[event.payload.id].needs[i] -= request
-                            })
-                            return oldResources
-                        })
-                        return oldProcesses
+                        const processes = clone(oldProcesses)
+                        processes[event.payload.id].needs = []
+                        processes[event.payload.id].allocations = []
+                        return processes
                     })
+                    setResources([])
+
+                    const toBeUpdatedProcs = [...processes]
+                    const toBeUpdatedRes = [...resources]
+
+                    event.payload.requests.forEach((request, i) => {
+                        toBeUpdatedRes[i] -= request
+                        toBeUpdatedProcs[event.payload.id].allocations[i] += request
+                        toBeUpdatedProcs[event.payload.id].needs[i] -= request
+                    })
+
+                    setProcesses(toBeUpdatedProcs)
+                    setResources(toBeUpdatedRes)
+
                     setLogs(logs)
                     break
+                }
+                case SystemEventType.ASSIGN_RESOURCES_END: {
+                    if (System.isSystemSafe) {
+                        const logs = [...toBeUpdatedLogs, {
+                            level: LogLevel.Success,
+                            content: '资源分配成功✓'
+                        }]
+                        setLogs(logs)
+                    } else {
+                        const logs = [...toBeUpdatedLogs, {
+                            level: LogLevel.Error,
+                            content: '资源分配失败！'
+                        }]
+                        setLogs(logs)
+                    }
                 }
             }
 
@@ -216,6 +241,8 @@ function App() {
 
         await handleSystemEvents(toBeUpdatedLogs)
         System.isWorking = false
+
+        return setReadOnly(false)
     }
 
     useEffect(() => {

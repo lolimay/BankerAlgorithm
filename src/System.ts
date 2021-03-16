@@ -142,6 +142,7 @@ export const System = new class {
     }
 
     public isWorking: boolean = false
+    public isSystemSafe: boolean = false
 
     /**
      * 系统事件生命周期函数，通过 hook 系统事件来更新 UI
@@ -195,10 +196,10 @@ export const System = new class {
         }
 
         // 系统是否安全的依据是所有进程是否都已成功执行结束
-        const isSafe = this._processes.every(({ isFinish }) => isFinish)
+        this.isSystemSafe = this._processes.every(({ isFinish }) => isFinish)
 
         // 打印安全序列
-        if (isSafe) {
+        if (this.isSystemSafe) {
             const seq = this._safeSequence
                 .map(id => this._processes[id].name || id)
                 .join()
@@ -208,7 +209,8 @@ export const System = new class {
         }
 
         this.emit(SystemEventType.CHECK_SAFETY_END)
-        return isSafe
+
+        return this.isSystemSafe
     }
 
     /**
@@ -276,6 +278,7 @@ export const System = new class {
 
         // 调用安全判定算法，检查系统是否安全
         if (this.isSafe()) {
+            this.emit(SystemEventType.ASSIGN_RESOURCES_END)
             return true
         } else {
             // 申请失败，资源回滚
@@ -284,6 +287,7 @@ export const System = new class {
                 process.allocations[i] -= request
                 process.needs[i] += request
             })
+            this.emit(SystemEventType.ASSIGN_RESOURCES_END)
             return false
         }
     }
