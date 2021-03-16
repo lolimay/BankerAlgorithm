@@ -141,6 +141,8 @@ export const System = new class {
         return this
     }
 
+    public isWorking: boolean = false
+
     /**
      * 系统事件生命周期函数，通过 hook 系统事件来更新 UI
      * 

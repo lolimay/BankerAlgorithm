@@ -1,5 +1,5 @@
 import ReactDOM from 'react-dom'
-import React, { useState, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Process, System, SystemEventType } from './System'
 
 import './index.scss'
@@ -36,11 +36,10 @@ interface Log {
     content: string
 }
 
-const preValues = new Map()
-
 function App() {
     const [resources, setResources] = useState(defaultResources)
     const [processes, setProcesses] = useState(defaultProcesses)
+    const [preValues, setPreValues] = useState(new Map())
     const [readOnly, setReadOnly] = useState(false)
     const [workInfo, setWorkInfo] = useState({})
     const [logs, setLogs] = useState([{ level: LogLevel.Info, content: '点击按钮开始进行安全性检查' } as Log])
@@ -162,17 +161,18 @@ function App() {
                         level: LogLevel.Info,
                         content: '尝试分配资源并调用系统安全性算法检测系统安全性...'
                     }]
-                    const toBeUpdatedProcs = [...processes]
-                    const toBeUpdatedRes = clone(resources)
-
-                    event.payload.requests.forEach((request, i) => {
-                        toBeUpdatedRes[i] -= request
-                        toBeUpdatedProcs[event.payload.id].allocations[i] += request
-                        toBeUpdatedProcs[event.payload.id].needs[i] -= request
+                    
+                    setProcesses(oldProcesses => {
+                        setResources(oldResources => {
+                            event.payload.requests.forEach((request, i) => {
+                                oldResources[i] -= request
+                                oldProcesses[event.payload.id].allocations[i] += request
+                                oldProcesses[event.payload.id].needs[i] -= request
+                            })
+                            return oldResources
+                        })
+                        return oldProcesses
                     })
-
-                    setProcesses(toBeUpdatedProcs)
-                    setResources(toBeUpdatedRes)
                     setLogs(logs)
                     break
                 }
@@ -197,9 +197,11 @@ function App() {
         toBeUpdatedLogs.push({ level: LogLevel.Info, content: '开始检查系统安全性...' })
         setLogs(toBeUpdatedLogs)
 
+        System.isWorking = true
         System.clearEvents().isSafe()
 
         await handleSystemEvents(toBeUpdatedLogs)
+        System.isWorking = false
     }
 
     const allocateResource = async () => {
@@ -209,10 +211,21 @@ function App() {
         const toBeUpdatedLogs = [...logs]
 
         performBackup()
+        System.isWorking = true
         System.clearEvents().allocateResources(processName, resourcesToBeAllocated)
 
         await handleSystemEvents(toBeUpdatedLogs)
+        System.isWorking = false
     }
+
+    useEffect(() => {
+        // 系统在工作时，不接受UI的数据更新请求
+        if (System.isWorking) {
+            return
+        }
+        // 同步UI的数据到系统
+        System.setProcesses(processes).setAvailableResources(resources)
+    }, [resources, processes])
 
     const createEmptyProcess = (index: number, resourceCategories: number) => ({
         name: `P${ index }`,
