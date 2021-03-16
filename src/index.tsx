@@ -86,7 +86,7 @@ function App() {
                     break
                 }
                 case SystemEventType.PROCESS_FINISH: {
-                    const toBeUpdatedProcs = clone(System.processes)
+                    const toBeUpdatedProcs = [...processes]
                     toBeUpdatedProcs[event.payload].isFinish = true
                     setProcesses(toBeUpdatedProcs)
                     break
