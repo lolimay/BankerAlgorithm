@@ -1,5 +1,5 @@
 import ReactDOM from 'react-dom'
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useRef } from 'react'
 import { Process, System, SystemEventType } from './System'
 
 import './index.scss'
@@ -36,10 +36,11 @@ interface Log {
     content: string
 }
 
+const preValues = new Map()
+
 function App() {
     const [resources, setResources] = useState(defaultResources)
     const [processes, setProcesses] = useState(defaultProcesses)
-    const [preValues, setPreValues] = useState(new Map())
     const [readOnly, setReadOnly] = useState(false)
     const [workInfo, setWorkInfo] = useState({})
     const [logs, setLogs] = useState([{ level: LogLevel.Info, content: '点击按钮开始进行安全性检查' } as Log])
@@ -80,14 +81,13 @@ function App() {
 
     const handleSystemEvents = async (toBeUpdatedLogs: Log[]) => {
         for (const event of System.events) {
-            console.log(event)
             switch (event.type) {
                 case SystemEventType.MOVE_WORKVEC: {
                     setWorkInfo(event.payload)
                     break
                 }
                 case SystemEventType.PROCESS_FINISH: {
-                    const toBeUpdatedProcs = [...processes]
+                    const toBeUpdatedProcs = clone(System.processes)
                     toBeUpdatedProcs[event.payload].isFinish = true
                     setProcesses(toBeUpdatedProcs)
                     break
@@ -162,21 +162,18 @@ function App() {
                         level: LogLevel.Info,
                         content: '尝试分配资源并调用系统安全性算法检测系统安全性...'
                     }]
-                    setLogs(logs)
-                    const { requests, id } = event.payload
-                    const toBeUpdatedProcs = clone(processes)
+                    const toBeUpdatedProcs = [...processes]
                     const toBeUpdatedRes = clone(resources)
 
-                    console.log(requests, id)
-                    requests.forEach((request, i) => {
+                    event.payload.requests.forEach((request, i) => {
                         toBeUpdatedRes[i] -= request
-                        toBeUpdatedProcs[id].allocations[i] += request
-                        toBeUpdatedProcs[id].needs[i] -= request
+                        toBeUpdatedProcs[event.payload.id].allocations[i] += request
+                        toBeUpdatedProcs[event.payload.id].needs[i] -= request
                     })
 
-                    console.log(toBeUpdatedProcs, toBeUpdatedRes)
                     setProcesses(toBeUpdatedProcs)
                     setResources(toBeUpdatedRes)
+                    setLogs(logs)
                     break
                 }
             }
@@ -216,10 +213,6 @@ function App() {
 
         await handleSystemEvents(toBeUpdatedLogs)
     }
-
-    useEffect(() => {
-        System.setProcesses(processes).setAvailableResources(resources)
-    }, [resources, processes])
 
     const createEmptyProcess = (index: number, resourceCategories: number) => ({
         name: `P${ index }`,

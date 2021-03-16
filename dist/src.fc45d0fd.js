@@ -30717,6 +30717,8 @@ var LogLevel;
   LogLevel["Success"] = "#abe047";
 })(LogLevel || (LogLevel = {}));
 
+var preValues = new Map();
+
 function App() {
   var _this = this;
 
@@ -30728,24 +30730,20 @@ function App() {
       processes = _b[0],
       setProcesses = _b[1];
 
-  var _c = __read(react_1.useState(new Map()), 2),
-      preValues = _c[0],
-      setPreValues = _c[1];
+  var _c = __read(react_1.useState(false), 2),
+      readOnly = _c[0],
+      setReadOnly = _c[1];
 
-  var _d = __read(react_1.useState(false), 2),
-      readOnly = _d[0],
-      setReadOnly = _d[1];
+  var _d = __read(react_1.useState({}), 2),
+      workInfo = _d[0],
+      setWorkInfo = _d[1];
 
-  var _e = __read(react_1.useState({}), 2),
-      workInfo = _e[0],
-      setWorkInfo = _e[1];
-
-  var _f = __read(react_1.useState([{
+  var _e = __read(react_1.useState([{
     level: LogLevel.Info,
     content: '点击按钮开始进行安全性检查'
   }]), 2),
-      logs = _f[0],
-      setLogs = _f[1];
+      logs = _e[0],
+      setLogs = _e[1];
 
   var backup = react_1.useRef({});
   var resourcesInputs = react_1.useRef();
@@ -30793,13 +30791,10 @@ function App() {
         switch (_d.label) {
           case 0:
             _loop_1 = function _loop_1(event) {
-              var toBeUpdatedProcs, log, logs_1, log, logs_2, logs_3, _e, requests, id_1, toBeUpdatedProcs_1, toBeUpdatedRes_1;
-
-              return __generator(this, function (_f) {
-                switch (_f.label) {
+              var toBeUpdatedProcs, log, logs_1, log, logs_2, logs_3, toBeUpdatedProcs_1, toBeUpdatedRes_1;
+              return __generator(this, function (_e) {
+                switch (_e.label) {
                   case 0:
-                    console.log(event);
-
                     switch (event.type) {
                       case System_1.SystemEventType.MOVE_WORKVEC:
                         {
@@ -30809,7 +30804,7 @@ function App() {
 
                       case System_1.SystemEventType.PROCESS_FINISH:
                         {
-                          toBeUpdatedProcs = __spreadArray([], __read(processes));
+                          toBeUpdatedProcs = util_1.clone(System_1.System.processes);
                           toBeUpdatedProcs[event.payload].isFinish = true;
                           setProcesses(toBeUpdatedProcs);
                           break;
@@ -30902,19 +30897,16 @@ function App() {
                             level: LogLevel.Info,
                             content: '尝试分配资源并调用系统安全性算法检测系统安全性...'
                           }]);
-                          setLogs(logs_3);
-                          _e = event.payload, requests = _e.requests, id_1 = _e.id;
-                          toBeUpdatedProcs_1 = util_1.clone(processes);
+                          toBeUpdatedProcs_1 = __spreadArray([], __read(processes));
                           toBeUpdatedRes_1 = util_1.clone(resources);
-                          console.log(requests, id_1);
-                          requests.forEach(function (request, i) {
+                          event.payload.requests.forEach(function (request, i) {
                             toBeUpdatedRes_1[i] -= request;
-                            toBeUpdatedProcs_1[id_1].allocations[i] += request;
-                            toBeUpdatedProcs_1[id_1].needs[i] -= request;
+                            toBeUpdatedProcs_1[event.payload.id].allocations[i] += request;
+                            toBeUpdatedProcs_1[event.payload.id].needs[i] -= request;
                           });
-                          console.log(toBeUpdatedProcs_1, toBeUpdatedRes_1);
                           setProcesses(toBeUpdatedProcs_1);
                           setResources(toBeUpdatedRes_1);
+                          setLogs(logs_3);
                           break;
                         }
                     }
@@ -30926,7 +30918,7 @@ function App() {
                     })];
 
                   case 1:
-                    _f.sent();
+                    _e.sent();
 
                     return [2
                     /*return*/
@@ -31063,10 +31055,6 @@ function App() {
       });
     });
   };
-
-  react_1.useEffect(function () {
-    System_1.System.setProcesses(processes).setAvailableResources(resources);
-  }, [resources, processes]);
 
   var createEmptyProcess = function createEmptyProcess(index, resourceCategories) {
     return {
@@ -31341,7 +31329,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57918" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50312" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
