@@ -109,8 +109,6 @@ function App() {
                     break
                 }
                 case SystemEventType.CHECK_SAFETY_END: {
-                    setProcesses(backup.current.processes)
-                    setResources(backup.current.resources)
                     setWorkInfo({})
                     setReadOnly(false)
                     break
@@ -150,6 +148,11 @@ function App() {
                             level: LogLevel.Error,
                             content: '系统当前剩余资源不满足此次申请，资源分配失败！'
                         }]
+
+                        // 回滚资源
+                        setProcesses(backup.current.processes)
+                        setResources(backup.current.resources)
+
                         setLogs(logs)
                         break
                     }
@@ -221,6 +224,11 @@ function App() {
         System.clearEvents().isSafe()
 
         await handleSystemEvents(toBeUpdatedLogs)
+
+        // 回滚资源
+        setProcesses(backup.current.processes)
+        setResources(backup.current.resources)
+
         System.isWorking = false
     }
 
