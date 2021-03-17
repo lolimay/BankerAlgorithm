@@ -66,7 +66,7 @@ function App() {
                 className='hidden-input'
                 defaultValue={num}
                 id={`${ type }-${ row }-${ index }`}
-                key={index}
+                key={`${ index }-${ num }`}
                 onFocus={onInputFocus}
                 onChange={onInputChange}
                 disabled={readOnly}
@@ -162,14 +162,6 @@ function App() {
                         level: LogLevel.Info,
                         content: '尝试分配资源并调用系统安全性算法检测系统安全性...'
                     }]
-                    // 清空引用
-                    setProcesses(oldProcesses => {
-                        const processes = clone(oldProcesses)
-                        processes[event.payload.id].needs = []
-                        processes[event.payload.id].allocations = []
-                        return processes
-                    })
-                    setResources([])
 
                     const toBeUpdatedProcs = [...processes]
                     const toBeUpdatedRes = [...resources]
@@ -200,6 +192,9 @@ function App() {
                         }]
                         setLogs(logs)
                     }
+                }
+                case SystemEventType.ASSIGN_RESOURCES_END: {
+                    console.log(System.processes, System.resources)
                 }
             }
 
