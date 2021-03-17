@@ -187,6 +187,12 @@ function App() {
                             level: LogLevel.Success,
                             content: '资源分配成功✓'
                         }]
+                        setProcesses(oldProcesses => {
+                            for (const process of oldProcesses) {
+                                process.isFinish = false
+                            }
+                            return oldProcesses
+                        })
                         setLogs(logs)
                     } else {
                         const logs = [...toBeUpdatedLogs, {
@@ -195,9 +201,7 @@ function App() {
                         }]
                         setLogs(logs)
                     }
-                }
-                case SystemEventType.ASSIGN_RESOURCES_END: {
-                    console.log(System.processes, System.resources)
+                    break
                 }
             }
 
