@@ -199,6 +199,11 @@ function App() {
                             level: LogLevel.Error,
                             content: '资源分配失败！'
                         }]
+
+                        // 回滚资源
+                        setProcesses(backup.current.processes)
+                        setResources(backup.current.resources)
+
                         setLogs(logs)
                     }
                     break
